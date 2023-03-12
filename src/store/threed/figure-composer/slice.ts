@@ -1,16 +1,40 @@
 // フィギュアコンポーザー（VRM + コントロールボール + poseBone + etc...)
 import { PayloadAction, createSlice } from '@reduxjs/toolkit';
-import THREE from 'three';
-import { VRMHumanBoneName } from '@pixiv/three-vrm';
+import * as THREE from 'three';
+import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
+import { v4 as uuidv4 } from 'uuid';
+
+export type VRMPoseNodeState = {
+  position: THREE.Vector3;
+  rotation: THREE.Euler;
+  scale: THREE.Vector3;
+};
+export type VRMEntity = {
+  translate: THREE.Vector3;
+  scale: THREE.Vector3;
+  rotation: THREE.Euler;
+  vrmPose: Map<VRMHumanBoneName, VRMPoseNodeState>;
+};
+
+export enum composerRenderState {
+  renderVRM = 1,
+  renderPoseBone = 1 << 1,
+  renderControlCube = 1 << 2,
+  renderAdditionalFacePoint = 1 << 3,
+}
+
+export enum composerSelectState {
+  none = 0,
+  selected = 1,
+}
 
 export type FigureComposerEntity = {
-  uuid: number;
-  vrmFilename: string;
+  uuid: string;
+  vrmFilename?: string;
 
-  vrmTranslate: THREE.Vector3;
-  vrmRotate: THREE.Vector3;
-  vrmPose: { [boneName in VRMHumanBoneName]: THREE.Vector3 };
-  additionInfomationFace: {
+  vrmState: VRMEntity;
+  renderState: number; // composerRenderStateの&演算で入れる、
+  additionInfomationFace?: {
     [partName in 'Lear' | 'Nose' | 'Rear']: {
       a: number;
       b: number;
@@ -20,56 +44,95 @@ export type FigureComposerEntity = {
 };
 
 export type FigureComposersState = {
-  figureComposers: { [key: number]: FigureComposerEntity };
+  [key: string]: FigureComposerEntity;
 };
 
-export const initialState: FigureComposersState = { figureComposers: {} };
+export const initialState: FigureComposersState = {};
 
-const roomSlice = createSlice({
+const figureComposerSlice = createSlice({
   name: 'figureComposers',
   initialState,
   reducers: {
-    updateName: (state, action: PayloadAction<{ id: string; name: string }>) => {
-      return {
-        ...state,
-        name: action.payload,
+    addNewComposer: (state, action: PayloadAction<{ filename: string }>) => {
+      const filename = action.payload.filename;
+      const uuid = uuidv4();
+      const composerState = {
+        vrmFilename: filename,
+        vrmState: {
+          translate: new THREE.Vector3(),
+          scale: new THREE.Vector3(),
+          rotation: new THREE.Euler(),
+          vrmPose: new Map<VRMHumanBoneName, VRMPoseNodeState>(),
+        },
+        uuid: uuid,
+        renderState:
+          composerRenderState.renderVRM &
+          composerRenderState.renderPoseBone &
+          composerRenderState.renderControlCube &
+          composerRenderState.renderAdditionalFacePoint,
       };
+      state[uuid] = composerState;
     },
-    updateNickname: (state, action: PayloadAction<{ id: string; nickname: string }>) => {
-      return {
-        ...state,
-        nickname: action.payload,
-      };
+    translateComposer: (
+      state,
+      action: PayloadAction<{ id: string; translateTo: THREE.Vector3 }>,
+    ) => {
+      const { id, translateTo } = action.payload;
+      state[id].vrmState.translate = translateTo;
     },
-    updateRoom: (state, action: PayloadAction<{ room: RoomEntity }>) => {
-      const room = action.payload.room;
-      room.description === undefined ? (room.description = '') : null;
-      room.mainLangage === undefined ? (room.mainLangage = '') : null;
-      room.category === undefined ? (room.category = { id: 0, name: 'なし' }) : null;
-      room.currentUserNum === undefined ? (room.currentUserNum = 0) : null;
-      room.maxUserNum === undefined ? (room.maxUserNum = 0) : null;
-
-      state.rooms[room.roomIdentity] = room;
+    scaleComposer: (
+      state,
+      action: PayloadAction<{ id: string; scale: THREE.Vector3 }>,
+    ) => {
+      const { id, scale } = action.payload;
+      state[id].vrmState.scale = scale;
     },
-  },
-  extraReducers: builder => {
-    builder.addCase(asyncFetchRooms.fulfilled, (state, action) => {
-      const rooms = action.payload.rooms;
-      const mapedRoom = rooms?.reduce((prev, next: Room) => {
-        prev[next.id] = next;
-        return prev;
-      }, {});
-      state.rooms = Object.assign(state.rooms, mapedRoom);
-      return state;
-    });
-    builder.addCase(HYDRATE, (state, action: any) => {
-      console.log(action.payload.room);
-      return {
-        ...state,
-        ...action.payload.room,
-      };
-    });
+    rotateComposer: (
+      state,
+      action: PayloadAction<{ id: string; rotate: THREE.Euler }>,
+    ) => {
+      const { id, rotate } = action.payload;
+      state[id].vrmState.rotation = rotate;
+    },
   },
 });
 
-export default roomSlice;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const _vrmSetter = (vrm: VRM, uuid: string) => {
+  const targetUUID = uuid;
+
+  const boneState = new Map<VRMHumanBoneName, VRMPoseNodeState>();
+  for (const boneName in VRMHumanBoneName) {
+    const name = boneName as VRMHumanBoneName;
+    const boneNode = vrm.humanoid.getNormalizedBoneNode(name);
+    if (boneNode == null) {
+      continue;
+    }
+    const pose: VRMPoseNodeState = {
+      position: boneNode.position,
+      scale: boneNode.scale,
+      rotation: boneNode.rotation,
+    };
+    boneState.set(name, pose);
+  }
+
+  const vrmPose: Map<VRMHumanBoneName, VRMPoseNodeState> = boneState;
+
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const composerState = {
+    vrmState: {
+      translate: vrm.scene.position,
+      scale: vrm.scene.scale,
+      rotation: vrm.scene.rotation,
+      vrmPose,
+    },
+    uuid: targetUUID ? targetUUID : vrm.scene.uuid,
+    renderState:
+      composerRenderState.renderVRM &
+      composerRenderState.renderPoseBone &
+      composerRenderState.renderControlCube &
+      composerRenderState.renderAdditionalFacePoint,
+  };
+};
+
+export default figureComposerSlice;
