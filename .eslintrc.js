@@ -8,9 +8,8 @@ module.exports = {
   plugins: ['react', 'jsx-a11y', 'import', 'prettier', '@typescript-eslint'],
   globals: {},
   rules: {
-    'prettier/prettier': 'error',
     // TypeScript
-    '@typescript-eslint/no-unused-vars': 'error',
+    '@typescript-eslint/no-unused-vars': 'warn',
     '@typescript-eslint/explicit-member-accessibility': 'off',
     '@typescript-eslint/no-object-literal-type-assertion': 'off',
     // v4 changes
@@ -43,4 +42,4 @@ module.exports = {
     },
     'import/extensions': ['.js', '.ts', '.mjs', '.jsx', '.tsx'],
   },
-}
+};
