@@ -4,10 +4,12 @@ import logger from 'redux-logger';
 import figureComposerSlice, {
   initialState as initalFigureComposersState,
 } from './threed/figure-composer/slice';
+import toolStateSlice from './threed/tool/slice';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 export const rootReducer = combineReducers({
   figureComposers: figureComposerSlice.reducer,
+  currentTool: toolStateSlice.reducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
