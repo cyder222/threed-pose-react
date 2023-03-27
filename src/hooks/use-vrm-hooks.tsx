@@ -26,7 +26,7 @@ function loadVRM(
 function useVRM(
   url: string | null,
   onProgress: (event: ProgressEvent<EventTarget>) => void,
-  onFinish: () => void,
+  onFinish: (vrm: VRM) => void,
 ) {
   const [vrm, setVrm] = useState<VRM | null>(null);
 
@@ -34,8 +34,8 @@ function useVRM(
     if (!url) return;
     (async () => {
       const vrms = await loadVRM(url, onProgress);
+      onFinish(vrms);
       setVrm(vrms);
-      onFinish();
     })();
   }, [url]);
 

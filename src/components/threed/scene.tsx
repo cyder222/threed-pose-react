@@ -7,11 +7,15 @@ import { Canvas } from '@react-three/fiber';
 import { useDispatch, useSelector } from 'react-redux';
 import FigureComposer from './figure-composer';
 import * as THREE from 'three';
+import { toolSelector } from '../../store/threed/tool/selectors';
 
 const Scene = () => {
   const dispatch = useDispatch();
   const figureComposers = useSelector((state: RootState) => {
     return FigureComposerListSelector.getAll(state);
+  });
+  const toolState = useSelector((state: RootState) => {
+    return toolSelector.getCurrent(state);
   });
   const canvas = useRef(null);
   const [camera, setCamera] = useState(
@@ -31,6 +35,23 @@ const Scene = () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
   }, [innerHeight, innerWidth]);
+
+  useEffect(() => {
+    const toolMode = toolState.toolMode;
+    // ツールモードが変更されたときのイベントリスナーを設定
+    const handleMouseDown = (e: MouseEvent) => {
+      if (toolMode === 'move') {
+        // 移動ツールの処理
+      } else if (toolMode === 'pose') {
+        // ポーズツールの処理
+      }
+    };
+
+    window.addEventListener('mousedown', handleMouseDown);
+    return () => {
+      window.removeEventListener('mousedown', handleMouseDown);
+    };
+  }, [toolState.toolMode]);
 
   return (
     <main style={{ width: '100%', height: '100%' }}>
