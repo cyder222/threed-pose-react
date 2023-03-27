@@ -3,17 +3,23 @@ import { PayloadAction, createSlice } from '@reduxjs/toolkit';
 import * as THREE from 'three';
 import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import { v4 as uuidv4 } from 'uuid';
+import {
+  SerializedVector3,
+  SerializedEuler,
+  serializeVector3,
+  serializeEuler,
+} from '../../../util/store/three-seiralize';
 
 export type VRMPoseNodeState = {
-  position: THREE.Vector3;
-  rotation: THREE.Euler;
-  scale: THREE.Vector3;
+  position: SerializedVector3;
+  rotation: SerializedEuler;
+  scale: SerializedVector3;
 };
 export type VRMEntity = {
-  translate: THREE.Vector3;
-  scale: THREE.Vector3;
-  rotation: THREE.Euler;
-  vrmPose: Map<VRMHumanBoneName, VRMPoseNodeState>;
+  translate: SerializedVector3;
+  scale: SerializedVector3;
+  rotation: SerializedEuler;
+  vrmPose: [VRMHumanBoneName, VRMPoseNodeState][];
 };
 
 export enum composerRenderState {
@@ -23,10 +29,18 @@ export enum composerRenderState {
   renderAdditionalFacePoint = 1 << 3,
 }
 
-export enum composerSelectState {
+export enum ComposerSelectState {
   none = 0,
   selected = 1,
 }
+
+export type AdditionalInfomationFace = {
+  [partName in 'Lear' | 'Nose' | 'Rear' | 'Leye' | 'Reye']: {
+    a: number;
+    b: number;
+    c: number;
+  };
+};
 
 export type FigureComposerEntity = {
   uuid: string;
@@ -34,13 +48,8 @@ export type FigureComposerEntity = {
 
   vrmState: VRMEntity;
   renderState: number; // composerRenderStateの&演算で入れる、
-  additionInfomationFace?: {
-    [partName in 'Lear' | 'Nose' | 'Rear']: {
-      a: number;
-      b: number;
-      c: number;
-    };
-  };
+  additionInfomationFace?: AdditionalInfomationFace;
+  composerSelectState: ComposerSelectState;
 };
 
 export type FigureComposersState = {
@@ -59,10 +68,10 @@ const figureComposerSlice = createSlice({
       const composerState = {
         vrmFilename: filename,
         vrmState: {
-          translate: new THREE.Vector3(),
-          scale: new THREE.Vector3(),
-          rotation: new THREE.Euler(),
-          vrmPose: new Map<VRMHumanBoneName, VRMPoseNodeState>(),
+          translate: serializeVector3(new THREE.Vector3()),
+          scale: serializeVector3(new THREE.Vector3()),
+          rotation: serializeEuler(new THREE.Euler()),
+          vrmPose: [],
         },
         uuid: uuid,
         renderState:
@@ -70,6 +79,7 @@ const figureComposerSlice = createSlice({
           composerRenderState.renderPoseBone &
           composerRenderState.renderControlCube &
           composerRenderState.renderAdditionalFacePoint,
+        composerSelectState: ComposerSelectState.none,
       };
       state[uuid] = composerState;
     },
@@ -78,21 +88,28 @@ const figureComposerSlice = createSlice({
       action: PayloadAction<{ id: string; translateTo: THREE.Vector3 }>,
     ) => {
       const { id, translateTo } = action.payload;
-      state[id].vrmState.translate = translateTo;
+      state[id].vrmState.translate = serializeVector3(translateTo);
     },
     scaleComposer: (
       state,
       action: PayloadAction<{ id: string; scale: THREE.Vector3 }>,
     ) => {
       const { id, scale } = action.payload;
-      state[id].vrmState.scale = scale;
+      state[id].vrmState.scale = serializeVector3(scale);
     },
     rotateComposer: (
       state,
       action: PayloadAction<{ id: string; rotate: THREE.Euler }>,
     ) => {
       const { id, rotate } = action.payload;
-      state[id].vrmState.rotation = rotate;
+      state[id].vrmState.rotation = serializeEuler(rotate);
+    },
+    changeSelectState: (
+      state,
+      action: PayloadAction<{ id: string; selectState: ComposerSelectState }>,
+    ) => {
+      const { id, selectState } = action.payload;
+      state[id].composerSelectState = selectState;
     },
   },
 });
@@ -109,9 +126,9 @@ const _vrmSetter = (vrm: VRM, uuid: string) => {
       continue;
     }
     const pose: VRMPoseNodeState = {
-      position: boneNode.position,
-      scale: boneNode.scale,
-      rotation: boneNode.rotation,
+      position: serializeVector3(boneNode.position),
+      scale: serializeVector3(boneNode.scale),
+      rotation: serializeEuler(boneNode.rotation),
     };
     boneState.set(name, pose);
   }
