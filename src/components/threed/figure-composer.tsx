@@ -70,11 +70,15 @@ const FigureComposer = (props: { uuid: string }) => {
     return vrm ? new THREE.Box3Helper(new THREE.Box3().setFromObject(vrm.scene)) : null;
   }, [vrm]);
 
-  // hover時に見た目を変更する
+  // hover時、select時に見た目を変更する
   useEffect(() => {
     const setMaterial = (obj: THREE.Mesh, material: unknown, hover: boolean) => {
       if (material instanceof MToonMaterial) {
         // MToonMaterialの場合
+        if (composerState.composerSelectState === ComposerSelectState.selected) {
+          material.uniforms.emissive.value.set(0x0000ff);
+          return;
+        }
         hover
           ? material.uniforms.emissive.value.set(0x0000ff)
           : (material.uniforms.emissive.value =
@@ -82,6 +86,10 @@ const FigureComposer = (props: { uuid: string }) => {
       } else {
         // MeshStandardMaterialやMeshBasicMaterialの場合
         const mat = material as THREE.MeshBasicMaterial;
+        if (composerState.composerSelectState === ComposerSelectState.selected) {
+          mat.color.set(0x0000ff);
+          return;
+        }
         hover
           ? mat.color.set(0x0000ff)
           : (mat.color = obj.userData.originalColor[mat.uuid].clone());
@@ -104,7 +112,6 @@ const FigureComposer = (props: { uuid: string }) => {
     event.stopPropagation();
     switch (toolState.toolMode) {
       case 'move': {
-        setHovered(true);
         dispatch(
           FigureComposerSlice.actions.changeSelectState({
             id: props.uuid,
@@ -144,7 +151,6 @@ const FigureComposer = (props: { uuid: string }) => {
   };
 
   const handlePointerOut = (event: ThreeEvent<PointerEvent>) => {
-    console.log('handlePointerOut');
     switch (toolState.toolMode) {
       case 'move': {
         setHovered(false);
