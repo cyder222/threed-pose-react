@@ -111,6 +111,11 @@ const figureComposerSlice = createSlice({
       const { id, selectState } = action.payload;
       state[id].composerSelectState = selectState;
     },
+    clearAllSelectState: state => {
+      Object.keys(state).forEach(key => {
+        state[key].composerSelectState = ComposerSelectState.none;
+      });
+    },
   },
 });
 
