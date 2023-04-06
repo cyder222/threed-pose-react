@@ -3,11 +3,12 @@ import useVRM from '../../hooks/use-vrm-hooks';
 import { ThreeEvent } from '@react-three/fiber';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/create-store';
-import { useTexture } from '@react-three/drei';
+import { TransformControls, useTexture } from '@react-three/drei';
 import { FigureComposerListSelector } from '../../store/threed/figure-composer/selectors';
 import FigureComposerSlice, {
   ComposerSelectState,
 } from '../../store/threed/figure-composer/slice';
+import toolSlice from '../../store/threed/tool/slice';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
 import { MToonMaterial, VRM } from '@pixiv/three-vrm';
@@ -24,6 +25,7 @@ const FigureComposer = (props: { uuid: string }) => {
   const [hovered, setHovered] = useState(false);
   const vrmRef = useRef<VRM>(null);
   const meshRef = useRef(null);
+  const transformControlRef = useRef<any>(null);
   const dispatch = useDispatch();
 
   const toolState = useSelector((state: RootState) => {
@@ -106,9 +108,9 @@ const FigureComposer = (props: { uuid: string }) => {
         }
       }
     });
-  }, [hovered]);
+  }, [hovered, composerState.composerSelectState]);
 
-  const handlePointerDown = (event: ThreeEvent<PointerEvent>) => {
+  const handlePointerDown = (event: THREE.Event) => {
     event.stopPropagation();
     switch (toolState.toolMode) {
       case 'move': {
@@ -135,6 +137,7 @@ const FigureComposer = (props: { uuid: string }) => {
   const handlePointerEnter = (event: ThreeEvent<PointerEvent>) => {
     switch (toolState.toolMode) {
       case 'move': {
+        event.stopPropagation();
         setHovered(true);
         break;
       }
@@ -167,21 +170,28 @@ const FigureComposer = (props: { uuid: string }) => {
         break;
     }
   };
+  // 即時反応が欲しいので、stateにしてない
+  let mouseUpOnTransform = true;
   return (
     (!loading && vrm && (
-      <group>
-        <mesh
-          ref={meshRef}
-          position={deserializeVector3(composerState.vrmState.translate)}>
-          <primitive object={vrm.scene} ref={vrmRef} onPointerDown={handlePointerDown} />
-        </mesh>
-        {vrmBoundingBox && (
-          <primitive
-            position={vrm.scene.position}
-            object={vrmBoundingBox}
-            onPointerOver={handlePointerEnter}
-            onPointerLeave={handlePointerOut}></primitive>
-        )}
+      <group ref={meshRef}>
+        <TransformControls
+          mode='translate'
+          object={vrm.scene}
+          onMouseDown={() => {
+            mouseUpOnTransform = false;
+            dispatch(toolSlice.actions.setMoveToolMode('movingTarget'));
+          }}
+          onMouseUp={() => {
+            mouseUpOnTransform = true;
+            dispatch(toolSlice.actions.setMoveToolMode('selectedTarget'));
+          }}
+          raycast={(_raycaster, intersects) => {
+            // 直接マウスが下げられてない時、このオブジェクトは無視する
+            // 空の領域をタップしても、このオブジェクトがレイキャストに引っかかるので対策
+            if (mouseUpOnTransform) intersects.length = 0;
+          }}></TransformControls>
+        <primitive object={vrm.scene} ref={vrmRef} onPointerDown={handlePointerDown} />
       </group>
     )) || <></>
   );

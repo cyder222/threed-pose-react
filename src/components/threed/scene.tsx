@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { OrbitControls } from '@react-three/drei';
+import { OrbitControls, TransformControls } from '@react-three/drei';
 import { FigureComposerListSelector } from '../../store/threed/figure-composer/selectors';
 import figureComposerSlice from '../../store/threed/figure-composer/slice';
 import { RootState } from '../../store/create-store';
@@ -8,6 +8,11 @@ import { useDispatch, useSelector } from 'react-redux';
 import FigureComposer from './figure-composer';
 import * as THREE from 'three';
 import { toolSelector } from '../../store/threed/tool/selectors';
+import { ThreeEvent } from 'react-three-fiber';
+import { EmptyObject } from './empty-object';
+import FigureComposerSlice, {
+  ComposerSelectState,
+} from '../../store/threed/figure-composer/slice';
 
 const Scene = () => {
   const dispatch = useDispatch();
@@ -17,6 +22,8 @@ const Scene = () => {
   const toolState = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [orbitEnable, setOrbitEnable] = useState(true);
   const canvas = useRef(null);
   const [camera, setCamera] = useState(
     new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 10000),
@@ -37,27 +44,31 @@ const Scene = () => {
   }, [innerHeight, innerWidth]);
 
   useEffect(() => {
-    const toolMode = toolState.toolMode;
-    // ツールモードが変更されたときのイベントリスナーを設定
-    const handleMouseDown = (e: MouseEvent) => {
-      if (toolMode === 'move') {
-        // 移動ツールの処理
-      } else if (toolMode === 'pose') {
-        // ポーズツールの処理
-      }
-    };
+    setOrbitEnable(toolState.moveToolMode !== 'movingTarget');
+  }, [toolState.moveToolMode]);
 
-    window.addEventListener('mousedown', handleMouseDown);
-    return () => {
-      window.removeEventListener('mousedown', handleMouseDown);
-    };
-  }, [toolState.toolMode]);
-
+  const handlePointerDown = (event?: THREE.Event) => {
+    console.log('handle');
+    //event.stopPropagation();
+    switch (toolState.toolMode) {
+      case 'move':
+        dispatch(FigureComposerSlice.actions.clearAllSelectState());
+        break;
+      default:
+        break;
+    }
+  };
   return (
     <main style={{ width: '100%', height: '100%' }}>
       <Canvas ref={canvas} camera={camera}>
-        <OrbitControls enablePan={true} minDistance={2} maxDistance={100} />
+        <OrbitControls
+          enablePan={true}
+          minDistance={2}
+          maxDistance={100}
+          enabled={orbitEnable}
+          camera={camera}></OrbitControls>
         <ambientLight />
+        <EmptyObject onClick={handlePointerDown}></EmptyObject>
         <pointLight position={[20, 10, 10]} />
         {Object.keys(figureComposers).map(key => {
           return <FigureComposer key={key} uuid={key}></FigureComposer>;
