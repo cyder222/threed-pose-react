@@ -3,12 +3,15 @@ import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // 何もないところをクリックした時の処理を追加するために使うコンポーネント
-export const EmptyObject = (props: { onClick: (e?: THREE.Event) => void }) => {
+export const EmptyObject = (props: {
+  onClick?: (e?: THREE.Event) => void;
+  onPointerUp?: (e?: THREE.Event) => void;
+}) => {
   const { camera, gl, scene, mouse } = useThree();
   const raycaster = useRef(new THREE.Raycaster());
 
   const onPointerDown = () => {
-    props.onClick();
+    props.onClick?.();
   };
 
   useEffect(() => {
@@ -19,13 +22,24 @@ export const EmptyObject = (props: { onClick: (e?: THREE.Event) => void }) => {
       console.log(intersects);
       if (intersects.length === 0) {
         // 空白部分がクリックされたときにイベントを発生させる
-        props.onClick(e);
+        props.onClick?.(e);
+      }
+    };
+    const handleMouseUp = (e: MouseEvent) => {
+      raycaster.current.setFromCamera(mouse, camera);
+      const intersects = raycaster.current.intersectObjects(scene.children, true);
+      console.log(intersects);
+      if (intersects.length === 0) {
+        // 空白部分がクリックされたときにイベントを発生させる
+        props.onPointerUp?.(e);
       }
     };
 
     addEventListener('pointerdown', handleMouseDown);
+    addEventListener('pointerup', handleMouseUp);
     return () => {
       removeEventListener('pointerdown', handleMouseDown);
+      removeEventListener('pointerup', handleMouseUp);
     };
   }, [props.onClick]);
 

@@ -13,15 +13,17 @@ import { EmptyObject } from './empty-object';
 import FigureComposerSlice, {
   ComposerSelectState,
 } from '../../store/threed/figure-composer/slice';
+import Toolbox from './ui/tool-box';
+import toolSlice from '../../store/threed/tool/slice';
+import { toolService } from '../../store/threed/tool/machine/object-tool-machine';
+import useSceneEditTool from '../../hooks/tools/use-scene-edit-tool';
 
 const Scene = () => {
   const dispatch = useDispatch();
   const figureComposers = useSelector((state: RootState) => {
     return FigureComposerListSelector.getAll(state);
   });
-  const toolState = useSelector((state: RootState) => {
-    return toolSelector.getCurrent(state);
-  });
+  const sceneEditTool = useSceneEditTool();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [orbitEnable, setOrbitEnable] = useState(true);
   const canvas = useRef(null);
@@ -43,21 +45,6 @@ const Scene = () => {
     camera.updateProjectionMatrix();
   }, [innerHeight, innerWidth]);
 
-  useEffect(() => {
-    setOrbitEnable(toolState.moveToolMode !== 'movingTarget');
-  }, [toolState.moveToolMode]);
-
-  const handlePointerDown = (event?: THREE.Event) => {
-    console.log('handle');
-    //event.stopPropagation();
-    switch (toolState.toolMode) {
-      case 'move':
-        dispatch(FigureComposerSlice.actions.clearAllSelectState());
-        break;
-      default:
-        break;
-    }
-  };
   return (
     <main style={{ width: '100%', height: '100%' }}>
       <Canvas ref={canvas} camera={camera}>
@@ -68,7 +55,14 @@ const Scene = () => {
           enabled={orbitEnable}
           camera={camera}></OrbitControls>
         <ambientLight />
-        <EmptyObject onClick={handlePointerDown}></EmptyObject>
+        <EmptyObject
+          onClick={e => {
+            return sceneEditTool?.emptyHandlers?.onMouseDown?.(e);
+          }}
+          onPointerUp={e => {
+            return sceneEditTool?.emptyHandlers?.onMouseUp?.(e);
+          }}></EmptyObject>
+        <Toolbox></Toolbox>
         <pointLight position={[20, 10, 10]} />
         {Object.keys(figureComposers).map(key => {
           return <FigureComposer key={key} uuid={key}></FigureComposer>;

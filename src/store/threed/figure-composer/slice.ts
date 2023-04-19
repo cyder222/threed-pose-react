@@ -9,6 +9,7 @@ import {
   serializeVector3,
   serializeEuler,
 } from '../../../util/store/three-seiralize';
+import { stringify } from 'querystring';
 
 export type VRMPoseNodeState = {
   position: SerializedVector3;
@@ -115,6 +116,13 @@ const figureComposerSlice = createSlice({
       Object.keys(state).forEach(key => {
         state[key].composerSelectState = ComposerSelectState.none;
       });
+    },
+    changeDisplayState: (
+      state,
+      action: PayloadAction<{ id: string; displayState: number }>,
+    ) => {
+      const { id, displayState } = action.payload;
+      state[id].renderState = displayState;
     },
   },
 });

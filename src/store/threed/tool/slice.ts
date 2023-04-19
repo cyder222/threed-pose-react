@@ -1,40 +1,49 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import {
+  ToolEvent,
+  ToolContext,
+  toolService,
+  ToolStateSchema,
+} from './machine/object-tool-machine';
+import {
+  BaseActionObject,
+  ResolveTypegenMeta,
+  ServiceMap,
+  State,
+  TypegenDisabled,
+} from 'xstate';
 
-export type toolState = {
-  toolMode: 'move' | 'scale' | 'pose';
-  generalToolMode: 'none' | 'dragging';
-  moveToolMode: 'selectTarget' | 'selectedTarget' | 'movingTarget';
-  scaleToolMode: 'selectTarget' | 'selectedTarget' | 'scalingTarget';
-  poseToolMode: 'selectTarget' | 'selectedTarget' | 'selectedBone' | 'movingBone';
-};
-const initialState: toolState = {
-  toolMode: 'move', // デフォルトのツールモード
-  generalToolMode: 'none',
-  moveToolMode: 'selectTarget',
-  scaleToolMode: 'selectTarget',
-  poseToolMode: 'selectTarget',
-  // その他の初期状態
+export interface ToolState {
+  tool: State<
+    ToolContext,
+    ToolEvent,
+    ToolStateSchema,
+    any,
+    ResolveTypegenMeta<TypegenDisabled, ToolEvent, BaseActionObject, ServiceMap>
+  >;
+}
+
+const initialState: ToolState = {
+  tool: toolService.machine.initialState,
 };
 
 const toolSlice = createSlice({
-  name: 'editor',
+  name: 'tool',
   initialState,
   reducers: {
-    setToolMode: (state, action) => {
-      state.toolMode = action.payload;
-    },
-    setMoveToolMode: (state, action) => {
-      state.moveToolMode = action.payload;
-      state.generalToolMode = state.moveToolMode === 'movingTarget' ? 'dragging' : 'none';
-    },
-    setScaleToolMode: (state, action) => {
-      state.scaleToolMode = action.payload;
-      state.generalToolMode =
-        state.scaleToolMode === 'scalingTarget' ? 'dragging' : 'none';
-    },
-    setPoseToolMode: (state, action) => {
-      state.poseToolMode = action.payload;
-      state.generalToolMode = state.poseToolMode === 'movingBone' ? 'dragging' : 'none';
+    syncXstate: (
+      state,
+      action: PayloadAction<
+        State<
+          ToolContext,
+          ToolEvent,
+          ToolStateSchema,
+          any,
+          ResolveTypegenMeta<TypegenDisabled, ToolEvent, BaseActionObject, ServiceMap>
+        >
+      >,
+    ) => {
+      state.tool = action.payload;
     },
   },
 });

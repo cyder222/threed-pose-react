@@ -6,13 +6,18 @@ import { RootState } from '../../store/create-store';
 import { TransformControls, useTexture } from '@react-three/drei';
 import { FigureComposerListSelector } from '../../store/threed/figure-composer/selectors';
 import FigureComposerSlice, {
+  composerRenderState,
   ComposerSelectState,
 } from '../../store/threed/figure-composer/slice';
+import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
 import toolSlice from '../../store/threed/tool/slice';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
 import { MToonMaterial, VRM } from '@pixiv/three-vrm';
 import { deserializeVector3 } from '../../util/store/three-seiralize';
+import { toolService } from '../../store/threed/tool/machine/object-tool-machine';
+import figureComposerSlice from '../../store/threed/figure-composer/slice';
+import { StateValueMap } from 'xstate';
 
 const FigureComposer = (props: { uuid: string }) => {
   const url = useSelector((state: RootState) => {
@@ -21,6 +26,7 @@ const FigureComposer = (props: { uuid: string }) => {
   const composerState = useSelector((state: RootState) => {
     return FigureComposerListSelector.getById(state, props.uuid) || null;
   });
+  const objectToolHandler = useObjectToolHandler();
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState(false);
   const vrmRef = useRef<VRM>(null);
@@ -28,8 +34,8 @@ const FigureComposer = (props: { uuid: string }) => {
   const transformControlRef = useRef<any>(null);
   const dispatch = useDispatch();
 
-  const toolState = useSelector((state: RootState) => {
-    return toolSelector.getCurrent(state);
+  const toolMode = useSelector((state: RootState) => {
+    return toolSelector.getCurrentMode(state);
   });
 
   const vrm = useVRM(
@@ -110,10 +116,34 @@ const FigureComposer = (props: { uuid: string }) => {
     });
   }, [hovered, composerState.composerSelectState]);
 
+  // toolのModeに合わせて、composerの表示状態を変更する
+  useEffect(() => {
+    if (toolMode.startsWith('pose_')) {
+      dispatch(
+        figureComposerSlice.actions.changeDisplayState({
+          id: props.uuid,
+          displayState:
+            composerRenderState.renderVRM + composerRenderState.renderControlCube,
+        }),
+      );
+    }
+  }, [toolMode]);
+
   const handlePointerDown = (event: THREE.Event) => {
     event.stopPropagation();
-    switch (toolState.toolMode) {
-      case 'move': {
+
+    switch (toolMode) {
+      case 'idle': {
+        toolService.send('SELECT');
+        dispatch(
+          figureComposerSlice.actions.changeSelectState({
+            id: props.uuid,
+            selectState: ComposerSelectState.selected,
+          }),
+        );
+        break;
+      }
+      case 'target_selected': {
         dispatch(
           FigureComposerSlice.actions.changeSelectState({
             id: props.uuid,
@@ -135,7 +165,7 @@ const FigureComposer = (props: { uuid: string }) => {
   };
 
   const handlePointerEnter = (event: ThreeEvent<PointerEvent>) => {
-    switch (toolState.toolMode) {
+    switch (toolMode) {
       case 'move': {
         event.stopPropagation();
         setHovered(true);
@@ -154,7 +184,7 @@ const FigureComposer = (props: { uuid: string }) => {
   };
 
   const handlePointerOut = (event: ThreeEvent<PointerEvent>) => {
-    switch (toolState.toolMode) {
+    switch (toolMode) {
       case 'move': {
         setHovered(false);
         break;
@@ -178,20 +208,29 @@ const FigureComposer = (props: { uuid: string }) => {
         <TransformControls
           mode='translate'
           object={vrm.scene}
-          onMouseDown={() => {
+          onMouseDown={(event: THREE.Event | undefined) => {
             mouseUpOnTransform = false;
-            dispatch(toolSlice.actions.setMoveToolMode('movingTarget'));
+            objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
           }}
-          onMouseUp={() => {
+          onMouseUp={(event: THREE.Event | undefined) => {
             mouseUpOnTransform = true;
-            dispatch(toolSlice.actions.setMoveToolMode('selectedTarget'));
+            objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
           }}
           raycast={(_raycaster, intersects) => {
             // 直接マウスが下げられてない時、このオブジェクトは無視する
             // 空の領域をタップしても、このオブジェクトがレイキャストに引っかかるので対策
             if (mouseUpOnTransform) intersects.length = 0;
           }}></TransformControls>
-        <primitive object={vrm.scene} ref={vrmRef} onPointerDown={handlePointerDown} />
+        <primitive
+          object={vrm.scene}
+          ref={vrmRef}
+          onPointerDown={(event: THREE.Event | undefined) => {
+            objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
+          }}
+          onPointerUp={(event: THREE.Event | undefined) => {
+            objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
+          }}
+        />
       </group>
     )) || <></>
   );
