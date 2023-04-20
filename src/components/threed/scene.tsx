@@ -10,12 +10,8 @@ import * as THREE from 'three';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import { ThreeEvent } from 'react-three-fiber';
 import { EmptyObject } from './empty-object';
-import FigureComposerSlice, {
-  ComposerSelectState,
-} from '../../store/threed/figure-composer/slice';
+
 import Toolbox from './ui/tool-box';
-import toolSlice from '../../store/threed/tool/slice';
-import { toolService } from '../../store/threed/tool/machine/object-tool-machine';
 import useSceneEditTool from '../../hooks/tools/use-scene-edit-tool';
 
 const Scene = () => {

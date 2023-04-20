@@ -34,8 +34,8 @@ const FigureComposer = (props: { uuid: string }) => {
   const transformControlRef = useRef<any>(null);
   const dispatch = useDispatch();
 
-  const toolMode = useSelector((state: RootState) => {
-    return toolSelector.getCurrentMode(state);
+  const tool = useSelector((state: RootState) => {
+    return toolSelector.getCurrent(state);
   });
 
   const vrm = useVRM(
@@ -116,40 +116,41 @@ const FigureComposer = (props: { uuid: string }) => {
     });
   }, [hovered, composerState.composerSelectState]);
 
-  // toolのModeに合わせて、composerの表示状態を変更する
-  useEffect(() => {
-    if (toolMode.startsWith('pose_')) {
-      dispatch(
-        figureComposerSlice.actions.changeDisplayState({
-          id: props.uuid,
-          displayState:
-            composerRenderState.renderVRM + composerRenderState.renderControlCube,
-        }),
-      );
+  const getControlType = useMemo(() => {
+    if (tool.tool.matches({ target_selected: 'move' })) {
+      return 'translate';
+    } else if (tool.tool.matches({ target_selected: 'rotate' })) {
+      return 'rotate';
+    } else if (tool.tool.matches({ target_selected: 'scale' })) {
+      return 'scale';
+    } else {
+      return '';
     }
-  }, [toolMode]);
+  }, [tool.tool]);
 
   // 即時反応が欲しいので、stateにしてない
   let mouseUpOnTransform = true;
   return (
     (!loading && vrm && (
       <group ref={meshRef}>
-        <TransformControls
-          mode='translate'
-          object={vrm.scene}
-          onMouseDown={(event: THREE.Event | undefined) => {
-            mouseUpOnTransform = false;
-            objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
-          }}
-          onMouseUp={(event: THREE.Event | undefined) => {
-            mouseUpOnTransform = true;
-            objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
-          }}
-          raycast={(_raycaster, intersects) => {
-            // 直接マウスが下げられてない時、このオブジェクトは無視する
-            // 空の領域をタップしても、このオブジェクトがレイキャストに引っかかるので対策
-            if (mouseUpOnTransform) intersects.length = 0;
-          }}></TransformControls>
+        {getControlType !== '' && (
+          <TransformControls
+            mode={getControlType}
+            object={vrm.scene}
+            onMouseDown={(event: THREE.Event | undefined) => {
+              mouseUpOnTransform = false;
+              objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
+            }}
+            onMouseUp={(event: THREE.Event | undefined) => {
+              mouseUpOnTransform = true;
+              objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
+            }}
+            raycast={(_raycaster, intersects) => {
+              // 直接マウスが下げられてない時、このオブジェクトは無視する
+              // 空の領域をタップしても、このオブジェクトがレイキャストに引っかかるので対策
+              if (mouseUpOnTransform) intersects.length = 0;
+            }}></TransformControls>
+        )}
         <primitive
           object={vrm.scene}
           ref={vrmRef}
