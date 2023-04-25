@@ -6,34 +6,83 @@ import { RootState } from '../../../store/create-store';
 import { useRef } from 'react';
 import { Canvas, useFrame } from 'react-three-fiber';
 import { Html, Billboard } from '@react-three/drei';
+import { toolService } from '../../../store/threed/tool/machine/object-tool-machine';
 import { Group, Vector3 } from 'three';
+import { HStack } from '@chakra-ui/react';
+import figureComposerSlice from '../../../store/threed/figure-composer/slice';
 
-const Button = (props: { position: Vector3 }) => {
-  const buttonRef = useRef<Group>();
+interface ToolBoxRefs {
+  billBoardRef: React.RefObject<typeof Billboard>;
+}
+
+const TranslationToolbox = (
+  props: { position: Vector3; targetUUID: string } & ToolBoxRefs,
+) => {
+  const billBoardRef = useRef(null);
+  const dispatch = useDispatch();
   return (
-    <group position={props.position}>
-      <Billboard>
-        <Html>
-          <button>Click me</button>
-        </Html>
-      </Billboard>
-    </group>
+    <Billboard ref={billBoardRef} position={props.position}>
+      <Html>
+        <HStack>
+          <div>
+            <button
+              onPointerDown={e => {
+                e.stopPropagation();
+                toolService.send('MOVE');
+              }}>
+              移動
+            </button>
+          </div>
+          <div>
+            <button
+              onPointerDown={e => {
+                e.stopPropagation();
+                toolService.send('ROTATE');
+              }}>
+              回転
+            </button>
+          </div>
+          <div>
+            <button
+              onPointerDown={e => {
+                e.stopPropagation();
+                toolService.send('SCALE');
+              }}>
+              スケール
+            </button>
+          </div>
+          <div>
+            <button
+              onPointerDown={e => {
+                e.stopPropagation();
+                toolService.send('CANCEL');
+                dispatch(figureComposerSlice.actions.clearAllSelectState());
+              }}>
+              キャンセル
+            </button>
+          </div>
+        </HStack>
+      </Html>
+    </Billboard>
   );
 };
 
-const Toolbox = () => {
+const ObjectToolBox = (props: { targetUUID: string }) => {
   const dispatch = useDispatch();
   const toolState = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });
+  const ref = useRef(null);
 
   return (
     <>
-      <Button position={new Vector3(0, 2, 0)}></Button>
-      <Button position={new Vector3(0, 0, 0)}></Button>
+      <TranslationToolbox
+        billBoardRef={ref}
+        targetUUID={props.targetUUID}
+        position={new Vector3(0, 2, 0)}></TranslationToolbox>
       {/* 他のツールボタン */}
     </>
   );
 };
 
-export default Toolbox;
+export default ObjectToolBox;

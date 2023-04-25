@@ -10,14 +10,12 @@ import FigureComposerSlice, {
   ComposerSelectState,
 } from '../../store/threed/figure-composer/slice';
 import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
-import toolSlice from '../../store/threed/tool/slice';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
 import { MToonMaterial, VRM } from '@pixiv/three-vrm';
-import { deserializeVector3 } from '../../util/store/three-seiralize';
-import { toolService } from '../../store/threed/tool/machine/object-tool-machine';
+import { Group } from 'three';
+import { deserializeEuler, deserializeVector3 } from '../../util/store/three-seiralize';
 import figureComposerSlice from '../../store/threed/figure-composer/slice';
-import { StateValueMap } from 'xstate';
 
 const FigureComposer = (props: { uuid: string }) => {
   const url = useSelector((state: RootState) => {
@@ -30,13 +28,82 @@ const FigureComposer = (props: { uuid: string }) => {
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState(false);
   const vrmRef = useRef<VRM>(null);
-  const meshRef = useRef(null);
+  const meshRef = useRef<Group>(null);
   const transformControlRef = useRef<any>(null);
   const dispatch = useDispatch();
 
   const tool = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });
+
+  // store側の位置情報が更新された時に、表示側も移動させる
+  useEffect(() => {
+    if (!meshRef?.current) {
+      return;
+    }
+    const newPosition = deserializeVector3(composerState.vrmState.translate);
+    const newScale = deserializeVector3(composerState.vrmState.scale);
+    const newRotation = deserializeEuler(composerState.vrmState.rotation);
+
+    meshRef.current.position.equals(newPosition) &&
+      meshRef.current.position.copy(newPosition);
+
+    meshRef.current.scale.equals(newScale) && meshRef.current.scale.copy(newScale);
+
+    meshRef.current.rotation.equals(newRotation) &&
+      meshRef.current.rotation.copy(newRotation);
+  }, [
+    composerState.vrmState.translate,
+    composerState.vrmState.rotation,
+    composerState.vrmState.scale,
+  ]);
+
+  // vrmの場所をthreejsの機能で移動した時に、storeもあわせる
+  useEffect(() => {
+    if (!meshRef?.current) {
+      return;
+    }
+    const newPosition = meshRef?.current?.position;
+    const newScale = meshRef?.current?.scale;
+    const newRotation = meshRef?.current?.rotation;
+    const oldPosition = deserializeVector3(composerState.vrmState.translate);
+    const oldScale = deserializeVector3(composerState.vrmState.scale);
+    const oldRotation = deserializeEuler(composerState.vrmState.rotation);
+    if (!newPosition.equals(oldPosition)) {
+      dispatch(
+        figureComposerSlice.actions.translateComposer({
+          id: props.uuid,
+          translateTo: newPosition.clone(),
+        }),
+      );
+    }
+    if (!newScale.equals(oldScale)) {
+      dispatch(
+        figureComposerSlice.actions.scaleComposer({
+          id: props.uuid,
+          scaleTo: newScale.clone(),
+        }),
+      );
+    }
+    if (!newRotation.equals(oldRotation)) {
+      dispatch(
+        figureComposerSlice.actions.rotateComposer({
+          id: props.uuid,
+          rotateTo: newRotation.clone(),
+        }),
+      );
+    }
+  }, [
+    meshRef?.current?.position.x,
+    meshRef?.current?.position.y,
+    meshRef?.current?.position.z,
+    meshRef?.current?.scale.x,
+    meshRef?.current?.scale.y,
+    meshRef?.current?.scale.z,
+    meshRef?.current?.rotation.x,
+    meshRef?.current?.rotation.y,
+    meshRef?.current?.rotation.z,
+  ]);
 
   const vrm = useVRM(
     url,
@@ -58,6 +125,8 @@ const FigureComposer = (props: { uuid: string }) => {
         }
       };
       setLoading(false);
+
+      // 色を変えるために、現在のMaterialデータをUserDataに保存
       loadedVrm.scene.traverse(obj => {
         console.log(obj);
         if (obj instanceof THREE.Mesh) {
@@ -132,11 +201,11 @@ const FigureComposer = (props: { uuid: string }) => {
   let mouseUpOnTransform = true;
   return (
     (!loading && vrm && (
-      <group ref={meshRef}>
+      <group>
         {getControlType !== '' && (
           <TransformControls
             mode={getControlType}
-            object={vrm.scene}
+            object={meshRef.current || undefined}
             onMouseDown={(event: THREE.Event | undefined) => {
               mouseUpOnTransform = false;
               objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
@@ -151,16 +220,18 @@ const FigureComposer = (props: { uuid: string }) => {
               if (mouseUpOnTransform) intersects.length = 0;
             }}></TransformControls>
         )}
-        <primitive
-          object={vrm.scene}
-          ref={vrmRef}
-          onPointerDown={(event: THREE.Event | undefined) => {
-            objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
-          }}
-          onPointerUp={(event: THREE.Event | undefined) => {
-            objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
-          }}
-        />
+        <group ref={meshRef}>
+          <primitive
+            object={vrm.scene}
+            ref={vrmRef}
+            onPointerDown={(event: THREE.Event | undefined) => {
+              objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
+            }}
+            onPointerUp={(event: THREE.Event | undefined) => {
+              objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
+            }}
+          />
+        </group>
       </group>
     )) || <></>
   );

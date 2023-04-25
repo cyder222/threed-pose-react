@@ -93,17 +93,17 @@ const figureComposerSlice = createSlice({
     },
     scaleComposer: (
       state,
-      action: PayloadAction<{ id: string; scale: THREE.Vector3 }>,
+      action: PayloadAction<{ id: string; scaleTo: THREE.Vector3 }>,
     ) => {
-      const { id, scale } = action.payload;
-      state[id].vrmState.scale = serializeVector3(scale);
+      const { id, scaleTo } = action.payload;
+      state[id].vrmState.scale = serializeVector3(scaleTo);
     },
     rotateComposer: (
       state,
-      action: PayloadAction<{ id: string; rotate: THREE.Euler }>,
+      action: PayloadAction<{ id: string; rotateTo: THREE.Euler }>,
     ) => {
-      const { id, rotate } = action.payload;
-      state[id].vrmState.rotation = serializeEuler(rotate);
+      const { id, rotateTo } = action.payload;
+      state[id].vrmState.rotation = serializeEuler(rotateTo);
     },
     changeSelectState: (
       state,

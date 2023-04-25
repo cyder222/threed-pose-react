@@ -58,10 +58,14 @@ const Scene = () => {
           onPointerUp={e => {
             return sceneEditTool?.emptyHandlers?.onMouseUp?.(e);
           }}></EmptyObject>
-        <Toolbox></Toolbox>
         <pointLight position={[20, 10, 10]} />
         {Object.keys(figureComposers).map(key => {
-          return <FigureComposer key={key} uuid={key}></FigureComposer>;
+          return (
+            <group>
+              <Toolbox targetUUID={key}></Toolbox>
+              <FigureComposer key={key} uuid={key}></FigureComposer>
+            </group>
+          );
         })}
       </Canvas>
     </main>
