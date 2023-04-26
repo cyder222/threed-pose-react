@@ -19,12 +19,19 @@ const Scene = () => {
   const figureComposers = useSelector((state: RootState) => {
     return FigureComposerListSelector.getAll(state);
   });
+  const tool = useSelector((state: RootState) => {
+    return toolSelector.getCurrent(state);
+  });
   const sceneEditTool = useSceneEditTool();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [orbitEnable, setOrbitEnable] = useState(true);
   const canvas = useRef(null);
   const [camera, setCamera] = useState(
     new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 10000),
+  );
+
+  const figureComposerRefs = useRef<Map<string, React.RefObject<HTMLDivElement>>>(
+    new Map<string, React.RefObject<HTMLDivElement>>([]),
   );
 
   useEffect(() => {
@@ -40,6 +47,14 @@ const Scene = () => {
     camera.aspect = innerWidth / innerHeight;
     camera.updateProjectionMatrix();
   }, [innerHeight, innerWidth]);
+
+  useEffect(() => {
+    if (tool.tool.context.isProcessing) {
+      setOrbitEnable(false);
+    } else {
+      setOrbitEnable(true);
+    }
+  }, [tool.tool.context.isProcessing]);
 
   return (
     <main style={{ width: '100%', height: '100%' }}>

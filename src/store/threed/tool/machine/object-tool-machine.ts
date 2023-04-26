@@ -93,6 +93,7 @@ export type ToolEvent =
 
 export interface ToolContext {
   selectedObject?: string;
+  isProcessing?: boolean;
   handlerCreator: createHandler;
 }
 
@@ -166,7 +167,12 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
               on: {
                 END_TOOL_OPERATION: 'wait',
               },
-              entry: () => console.log('ON ENTRY TRIGGERED on move processing'),
+              entry: context => {
+                context.isProcessing = true;
+              },
+              exit: context => {
+                context.isProcessing = false;
+              },
             },
             wait: {
               on: {
@@ -182,8 +188,23 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
             CANCEL: '#tool.target_selected',
           },
           states: {
-            processing: {},
-            wait: {},
+            processing: {
+              on: {
+                END_TOOL_OPERATION: 'wait',
+              },
+              entry: context => {
+                context.isProcessing = true;
+              },
+              exit: context => {
+                context.isProcessing = false;
+              },
+            },
+            wait: {
+              on: {
+                START_TOOL_OPERATION: 'processing',
+              },
+              entry: () => console.log('ON ENTRY TRIGGERED on move wait'),
+            },
           },
           entry: 'onRotateEntry',
           exit: 'onRotateExit',
@@ -193,8 +214,23 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
             CANCEL: '#tool.target_selected',
           },
           states: {
-            processing: {},
-            wait: {},
+            processing: {
+              on: {
+                END_TOOL_OPERATION: 'wait',
+              },
+              entry: context => {
+                context.isProcessing = true;
+              },
+              exit: context => {
+                context.isProcessing = false;
+              },
+            },
+            wait: {
+              on: {
+                START_TOOL_OPERATION: 'processing',
+              },
+              entry: () => console.log('ON ENTRY TRIGGERED on move wait'),
+            },
           },
           entry: 'onScaleEntry',
           exit: 'onScaleExit',
