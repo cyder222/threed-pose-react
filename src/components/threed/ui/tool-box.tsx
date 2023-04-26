@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import toolSlice from '../../../store/threed/tool/slice';
 import { toolSelector } from '../../../store/threed/tool/selectors';
@@ -10,6 +10,7 @@ import { toolService } from '../../../store/threed/tool/machine/object-tool-mach
 import { Group, Vector3 } from 'three';
 import { HStack } from '@chakra-ui/react';
 import figureComposerSlice from '../../../store/threed/figure-composer/slice';
+import { FigureComposerListSelector } from '../../../store/threed/figure-composer/selectors';
 
 interface ToolBoxRefs {
   billBoardRef: React.RefObject<typeof Billboard>;
@@ -67,11 +68,33 @@ const TranslationToolbox = (
   );
 };
 
-const ObjectToolBox = (props: { targetUUID: string }) => {
+const ObjectToolBox = (props: {
+  targetUUID: string;
+  targetBoudingBOX: THREE.Object3D;
+}) => {
   const dispatch = useDispatch();
   const toolState = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });
+  const composerState = useSelector((state: RootState) => {
+    return FigureComposerListSelector.getById(state, props.targetUUID);
+  });
+
+  // オブジェクトの位置とサイズに合わせて表示位置を調整する
+  useEffect(() => {
+    //表示位置を調整する
+  }, [
+    composerState.vrmState.rotation.x,
+    composerState.vrmState.rotation.y,
+    composerState.vrmState.rotation.z,
+    composerState.vrmState.translate.x,
+    composerState.vrmState.translate.y,
+    composerState.vrmState.translate.z,
+    composerState.vrmState.scale.x,
+    composerState.vrmState.scale.y,
+    composerState.vrmState.scale.z,
+  ]);
+
   const ref = useRef(null);
 
   return (
