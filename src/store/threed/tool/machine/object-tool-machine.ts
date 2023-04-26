@@ -157,11 +157,6 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
           entry: context => {
             context.handlerCreator = createObjectMoveToolHandler;
           },
-          on: {
-            CANCEL: { target: '#tool.target_selecting' },
-            ROTATE: 'rotate',
-            SCALE: 'scale',
-          },
           states: {
             processing: {
               on: {
@@ -184,9 +179,11 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
           exit: 'onMoveExit',
         },
         rotate: {
-          on: {
-            CANCEL: '#tool.target_selected',
+          initial: 'wait',
+          entry: context => {
+            context.handlerCreator = createObjectMoveToolHandler;
           },
+
           states: {
             processing: {
               on: {
@@ -206,12 +203,12 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
               entry: () => console.log('ON ENTRY TRIGGERED on move wait'),
             },
           },
-          entry: 'onRotateEntry',
           exit: 'onRotateExit',
         },
         scale: {
-          on: {
-            CANCEL: '#tool.target_selected',
+          initial: 'wait',
+          entry: context => {
+            context.handlerCreator = createObjectMoveToolHandler;
           },
           states: {
             processing: {
@@ -232,7 +229,6 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
               entry: () => console.log('ON ENTRY TRIGGERED on move wait'),
             },
           },
-          entry: 'onScaleEntry',
           exit: 'onScaleExit',
         },
         pose: {
