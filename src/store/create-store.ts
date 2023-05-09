@@ -4,10 +4,16 @@ import logger from 'redux-logger';
 import figureComposerSlice, {
   initialState as initalFigureComposersState,
 } from './threed/figure-composer/slice';
+import toolStateSlice from './threed/tool/slice';
+import {
+  toolMachineInitlizer,
+  toolService,
+} from './threed/tool/machine/object-tool-machine';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 
 export const rootReducer = combineReducers({
   figureComposers: figureComposerSlice.reducer,
+  currentTool: toolStateSlice.reducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -25,7 +31,9 @@ export type ReduxStore = Store<StoreState>;
 export const store = configureStore({
   reducer: rootReducer,
   middleware: getDefaultMiddleWare => {
-    const middleware = getDefaultMiddleWare({ serializableCheck: true });
+    const middleware = getDefaultMiddleWare({
+      serializableCheck: false,
+    });
     if (process.env.DEV_MODE !== 'production') {
       middleware.push(logger);
     }
@@ -33,6 +41,8 @@ export const store = configureStore({
   },
   devTools: process.env.DEV_MODE !== 'production',
 });
+
+toolMachineInitlizer(toolService, store);
 
 export type AppDispatch = typeof store.dispatch;
 export const useAppDispatch = () => useDispatch<AppDispatch>();
