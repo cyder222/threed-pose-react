@@ -1,5 +1,4 @@
 import { AppDispatch } from '../../../store/create-store';
-import figureComposerSlice from '../../../store/threed/figure-composer/slice';
 import { toolService } from '../../../store/threed/tool/machine/object-tool-machine';
 import { sceneEditToolHandlers } from './scene-edit-tool-functions';
 

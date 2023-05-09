@@ -1,6 +1,5 @@
 import { sceneEditToolHandlers } from './scene-edit-tool-functions';
 import { AppDispatch } from '../../../store/create-store';
-import { toolService } from '../../../store/threed/tool/machine/object-tool-machine';
 
 export const createObjectToolIdleHandler = (
   _dispatch: AppDispatch,

@@ -44,7 +44,7 @@ export const createObjectSelectedToolHandler = (
       onMouseMove(_uuid, _event, _raycaster) {
         return;
       },
-      onMouseUp(uuid, event, _raycaster) {
+      onMouseUp(_uuid, _event, _raycaster) {
         return;
       },
     },

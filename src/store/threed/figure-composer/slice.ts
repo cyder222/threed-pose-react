@@ -148,7 +148,7 @@ const _vrmSetter = (vrm: VRM, uuid: string) => {
   const vrmPose: Map<VRMHumanBoneName, VRMPoseNodeState> = boneState;
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const composerState = {
+  const _composerState = {
     vrmState: {
       translate: vrm.scene.position,
       scale: vrm.scene.scale,
