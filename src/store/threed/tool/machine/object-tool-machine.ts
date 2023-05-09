@@ -21,27 +21,27 @@ import toolSlice from '../slice';
 
 export interface ToolStateSchema {
   states: {
-    idle: {};
-    target_selecting: {};
-    adding: {};
+    idle: Record<never, never>;
+    target_selecting: Record<never, never>;
+    adding: Record<never, never>;
     target_selected: {
       states: {
         move: {
           states: {
-            wait: {};
-            processing: {};
+            wait: Record<never, never>;
+            processing: Record<never, never>;
           };
         };
         rotate: {
           states: {
-            wait: {};
-            processing: {};
+            wait: Record<never, never>;
+            processing: Record<never, never>;
           };
         };
         scale: {
           states: {
-            wait: {};
-            processing: {};
+            wait: Record<never, never>;
+            processing: Record<never, never>;
           };
         };
         pose: {
@@ -50,25 +50,25 @@ export interface ToolStateSchema {
               states: {
                 pose_target_move: {
                   states: {
-                    wait: {};
-                    processing: {};
+                    wait: Record<never, never>;
+                    processing: Record<never, never>;
                   };
                 };
                 pose_target_rotate: {
                   states: {
-                    wait: {};
-                    processing: {};
+                    wait: Record<never, never>;
+                    processing: Record<never, never>;
                   };
                 };
                 pose_target_scale: {
                   states: {
-                    wait: {};
-                    processing: {};
+                    wait: Record<never, never>;
+                    processing: Record<never, never>;
                   };
                 };
               };
             };
-            pose_idle: {};
+            pose_idle: Record<never, never>;
           };
         };
       };

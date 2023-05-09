@@ -4,18 +4,18 @@ import { toolService } from '../../../store/threed/tool/machine/object-tool-mach
 import { sceneEditToolHandlers } from './scene-edit-tool-functions';
 
 export const createObjectMoveToolHandler = (
-  dispatch: AppDispatch,
+  _dispatch: AppDispatch,
 ): sceneEditToolHandlers => {
   return {
     figureComposerHandlers: {
-      onMouseDown(uuid, event, _raycaster) {
+      onMouseDown(_uuid, _event, _raycaster) {
         toolService.send('START_TOOL_OPERATION');
         return;
       },
-      onMouseMove(uuid, event, _raycaster) {
+      onMouseMove(_uuid, _event, _raycaster) {
         return;
       },
-      onMouseUp(uuid, event, _raycaster) {
+      onMouseUp(_uuid, _event, _raycaster) {
         toolService.send('END_TOOL_OPERATION');
         return;
       },

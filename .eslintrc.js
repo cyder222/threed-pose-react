@@ -9,7 +9,6 @@ module.exports = {
   globals: {},
   rules: {
     // TypeScript
-    '@typescript-eslint/no-unused-vars': 'warn',
     '@typescript-eslint/explicit-member-accessibility': 'off',
     '@typescript-eslint/no-object-literal-type-assertion': 'off',
     // v4 changes
@@ -20,6 +19,15 @@ module.exports = {
     // React
     'react/jsx-filename-extension': ['error', { extensions: ['.tsx'] }],
     'react/prop-types': ['off', {}],
+    '@typescript-eslint/no-unused-vars': [
+      'warn',
+      {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_',
+        destructuredArrayIgnorePattern: '^_',
+      },
+    ],
     // import
     'import/extensions': [
       'error',

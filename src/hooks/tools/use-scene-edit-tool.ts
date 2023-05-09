@@ -5,7 +5,7 @@ import { toolSelector } from '../../store/threed/tool/selectors';
 import { useDispatch, useSelector } from 'react-redux';
 import { RootState } from '../../store/create-store';
 
-function useSceneEditTool(composerUUID?: string) {
+function useSceneEditTool(_composerUUID?: string) {
   const tool = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });
