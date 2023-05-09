@@ -17,7 +17,11 @@ import { Group } from 'three';
 import { deserializeEuler, deserializeVector3 } from '../../util/store/three-seiralize';
 import figureComposerSlice from '../../store/threed/figure-composer/slice';
 
-const FigureComposer = (props: { uuid: string }) => {
+const FigureComposer = (
+  props: { uuid: string } & {
+    vrmRef: React.RefObject<VRM>;
+  },
+) => {
   const url = useSelector((state: RootState) => {
     return FigureComposerListSelector.getFileUrlById(state, props.uuid) || null;
   });
@@ -224,10 +228,12 @@ const FigureComposer = (props: { uuid: string }) => {
           <primitive
             object={vrm.scene}
             ref={vrmRef}
-            onPointerDown={(event: THREE.Event | undefined) => {
+            onPointerDown={(event: ThreeEvent<PointerEvent> | undefined) => {
+              event?.stopPropagation();
               objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
             }}
-            onPointerUp={(event: THREE.Event | undefined) => {
+            onPointerUp={(event: ThreeEvent<PointerEvent> | undefined) => {
+              event?.stopPropagation();
               objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
             }}
           />

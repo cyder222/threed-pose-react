@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { OrbitControls, TransformControls } from '@react-three/drei';
 import { FigureComposerListSelector } from '../../store/threed/figure-composer/selectors';
 import figureComposerSlice from '../../store/threed/figure-composer/slice';
@@ -13,6 +13,12 @@ import { EmptyObject } from './empty-object';
 
 import Toolbox from './ui/tool-box';
 import useSceneEditTool from '../../hooks/tools/use-scene-edit-tool';
+import { VRM } from '@pixiv/three-vrm';
+import { Group } from 'three';
+
+interface VrmRefs {
+  [key: string]: React.RefObject<VRM>;
+}
 
 const Scene = () => {
   const dispatch = useDispatch();
@@ -22,8 +28,22 @@ const Scene = () => {
   const tool = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });
+
+  const getControlType = useMemo(() => {
+    if (tool.tool.matches({ target_selected: 'move' })) {
+      return 'translate';
+    } else if (tool.tool.matches({ target_selected: 'rotate' })) {
+      return 'rotate';
+    } else if (tool.tool.matches({ target_selected: 'scale' })) {
+      return 'scale';
+    } else {
+      return '';
+    }
+  }, [tool.tool]);
+
   const sceneEditTool = useSceneEditTool();
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const vrmRefs = useRef<VrmRefs>({});
   const [orbitEnable, setOrbitEnable] = useState(true);
   const canvas = useRef(null);
   const [camera, setCamera] = useState(
@@ -75,10 +95,16 @@ const Scene = () => {
           }}></EmptyObject>
         <pointLight position={[20, 10, 10]} />
         {Object.keys(figureComposers).map(key => {
+          vrmRefs.current[key] = React.createRef<VRM>();
           return (
             <group>
-              <Toolbox targetUUID={key}></Toolbox>
-              <FigureComposer key={key} uuid={key}></FigureComposer>
+              <Toolbox
+                target={vrmRefs.current[key].current?.scene}
+                targetUUID={key}></Toolbox>
+              <FigureComposer
+                vrmRef={vrmRefs.current[key]}
+                key={key}
+                uuid={key}></FigureComposer>
             </group>
           );
         })}

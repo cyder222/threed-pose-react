@@ -1,4 +1,3 @@
-import { Object3D } from 'three';
 import { AppDispatch } from '../../../store/create-store';
 
 export type SceneEditToolHandlerOptions = {
