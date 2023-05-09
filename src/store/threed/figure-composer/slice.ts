@@ -9,7 +9,6 @@ import {
   serializeVector3,
   serializeEuler,
 } from '../../../util/store/three-seiralize';
-import { stringify } from 'querystring';
 
 export type VRMPoseNodeState = {
   position: SerializedVector3;

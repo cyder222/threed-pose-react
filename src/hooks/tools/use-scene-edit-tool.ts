@@ -1,9 +1,4 @@
 import { useEffect, useState } from 'react';
-import {
-  createObjectSelectToolHandler,
-  createObjectSelectedToolHandler,
-} from './handlers/object-select-tool';
-import { createObjectMoveToolHandler } from './handlers/object-move-tool';
 import { createObjectToolIdleHandler } from './handlers/idle-tool';
 import { sceneEditToolHandlers } from './handlers/scene-edit-tool-functions';
 import { toolSelector } from '../../store/threed/tool/selectors';

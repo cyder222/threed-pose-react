@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/ban-types */
-import { Dispatch, AnyAction } from '@reduxjs/toolkit';
 import {
   BaseActionObject,
   interpret,
@@ -16,7 +15,6 @@ import {
   createObjectSelectToolHandler,
 } from '../../../../hooks/tools/handlers/object-select-tool';
 import { createHandler } from '../../../../hooks/tools/handlers/scene-edit-tool-functions';
-import { store } from '../../../create-store';
 import toolSlice from '../slice';
 
 // State Machine
