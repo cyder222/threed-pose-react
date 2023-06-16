@@ -16,7 +16,63 @@ import { ReactComponent as MoveIcon } from '../../../icons/move.svg';
 import { ReactComponent as RotationIcon } from '../../../icons/rotation.svg';
 import { ReactComponent as ScaleIcon } from '../../../icons/scale.svg';
 import { ReactComponent as CloseIcon } from '../../../icons/close.svg';
+import { ReactComponent as PoseIcon } from '../../../icons/pose.svg';
 import { Center } from 'chakra-ui';
+
+const PoseToolBox = (props: { position: Vector3; targetUUID: string }) => {
+  const dispatch = useDispatch();
+  const tool = useSelector((state: RootState) => {
+    return toolSelector.getCurrent(state);
+  });
+  const getControlType = useMemo(() => {
+    if (tool.tool.matches({ target_selected: 'move' })) {
+      return 'translate';
+    } else if (tool.tool.matches({ target_selected: 'rotate' })) {
+      return 'rotate';
+    } else if (tool.tool.matches({ target_selected: 'scale' })) {
+      return 'scale';
+    } else if (tool.tool.matches({ target_selected: 'pose' })) {
+      return 'pose';
+    } else {
+      return '';
+    }
+  }, [tool.tool]);
+
+  return (
+    <Billboard position={props.position}>
+      <Html
+        style={{
+          height: '32px',
+          width: '160px',
+          padding: '8px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}>
+        <HStack alignItems={'center'}>
+          <Stack w={32} h={32} alignItems={'center'} justifyContent={'center'}>
+            <button
+              onPointerDown={e => {
+                e.stopPropagation();
+              }}>
+              <PoseIcon width={32} height={32} />
+            </button>
+          </Stack>
+          <Stack w={32} h={32} alignItems={'center'} justifyContent={'center'}>
+            <button
+              onPointerDown={e => {
+                e.stopPropagation();
+                toolService.send('CANCEL');
+                dispatch(figureComposerSlice.actions.clearAlBonelSelectState());
+              }}>
+              <CloseIcon width={24} height={24} />
+            </button>
+          </Stack>
+        </HStack>
+      </Html>
+    </Billboard>
+  );
+};
 
 const defaultIconSize = 24;
 const selectedIconSize = 32;
@@ -34,6 +90,8 @@ const TranslationToolbox = (props: { position: Vector3; targetUUID: string }) =>
       return 'rotate';
     } else if (tool.tool.matches({ target_selected: 'scale' })) {
       return 'scale';
+    } else if (tool.tool.matches({ target_selected: 'pose' })) {
+      return 'pose';
     } else {
       return '';
     }
@@ -95,6 +153,15 @@ const TranslationToolbox = (props: { position: Vector3; targetUUID: string }) =>
             <button
               onPointerDown={e => {
                 e.stopPropagation();
+                toolService.send('POSE');
+              }}>
+              <PoseIcon width={24} height={24}></PoseIcon>
+            </button>
+          </Stack>
+          <Stack w={32} h={32} alignItems={'center'} justifyContent={'center'}>
+            <button
+              onPointerDown={e => {
+                e.stopPropagation();
                 toolService.send('CANCEL');
                 dispatch(figureComposerSlice.actions.clearAllSelectState());
               }}>
@@ -120,7 +187,9 @@ const ObjectToolBox = (props: { targetUUID: string; target?: Group }) => {
   });
 
   const getToolboxType = useMemo(() => {
-    if (tool.tool.matches('target_selected')) {
+    if (tool.tool.matches({ target_selected: 'pose' })) {
+      return 'poseControlMode';
+    } else if (tool.tool.matches('target_selected')) {
       return 'objectControlTool';
     } else {
       return '';
@@ -156,7 +225,11 @@ const ObjectToolBox = (props: { targetUUID: string; target?: Group }) => {
           targetUUID={props.targetUUID}
           position={new Vector3(0, 2, 0)}></TranslationToolbox>
       )}
-      {/* 他のツールボタン */}
+      {getToolboxType === 'poseControlMode' && (
+        <PoseToolBox
+          targetUUID={props.targetUUID}
+          position={new Vector3(0, 2, 0)}></PoseToolBox>
+      )}
     </>
   );
 };
