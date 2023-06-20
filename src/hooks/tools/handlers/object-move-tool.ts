@@ -7,15 +7,17 @@ export const createObjectMoveToolHandler = (
 ): sceneEditToolHandlers => {
   return {
     figureComposerHandlers: {
-      onMouseDown(_uuid, _event, _raycaster) {
+      onMouseDown(_uuid, event, _raycaster) {
         toolService.send('START_TOOL_OPERATION');
+        event?.stopPropagation?.();
         return;
       },
       onMouseMove(_uuid, _event, _raycaster) {
         return;
       },
-      onMouseUp(_uuid, _event, _raycaster) {
+      onMouseUp(_uuid, event, _raycaster) {
         toolService.send('END_TOOL_OPERATION');
+        event?.stopPropagation?.();
         return;
       },
     },

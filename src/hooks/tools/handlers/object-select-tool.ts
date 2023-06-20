@@ -10,8 +10,9 @@ export const createObjectSelectToolHandler = (
 ): sceneEditToolHandlers => {
   return {
     figureComposerHandlers: {
-      onMouseDown(composerUUID, _event, _raycaster) {
+      onMouseDown(composerUUID, event, _raycaster) {
         toolService.send('SELECT');
+        event?.stopPropagation();
         composerUUID
           ? dispatch(
               figureComposerSlice.actions.changeSelectState({
@@ -25,7 +26,8 @@ export const createObjectSelectToolHandler = (
       onMouseMove(_composerUUID, _event, _raycaster) {
         return;
       },
-      onMouseUp(_composerUUID, _event, _raycaster) {
+      onMouseUp(_composerUUID, event, _raycaster) {
+        event?.stopPropagation();
         return;
       },
     },
@@ -37,14 +39,16 @@ export const createObjectSelectedToolHandler = (
 ): sceneEditToolHandlers => {
   return {
     figureComposerHandlers: {
-      onMouseDown(_uuid, _event, _raycaster) {
+      onMouseDown(_uuid, event, _raycaster) {
         toolService.send('MOVE');
+        event?.stopPropagation();
         return;
       },
       onMouseMove(_uuid, _event, _raycaster) {
         return;
       },
-      onMouseUp(_uuid, _event, _raycaster) {
+      onMouseUp(_uuid, event, _raycaster) {
+        event?.stopPropagation();
         return;
       },
     },

@@ -274,11 +274,9 @@ const FigureComposer = (
             object={vrm.scene}
             ref={vrmRef}
             onPointerDown={(event: ThreeEvent<PointerEvent> | undefined) => {
-              event?.stopPropagation();
               objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
             }}
             onPointerUp={(event: ThreeEvent<PointerEvent> | undefined) => {
-              event?.stopPropagation();
               objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
             }}
           />
