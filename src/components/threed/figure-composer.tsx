@@ -8,14 +8,24 @@ import { FigureComposerListSelector } from '../../store/threed/figure-composer/s
 import FigureComposerSlice, {
   composerRenderState,
   ComposerSelectState,
+  VRMPoseNodeState,
+  VRMPoseState,
 } from '../../store/threed/figure-composer/slice';
 import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
-import { MToonMaterial, VRM } from '@pixiv/three-vrm';
+import { MToonMaterial, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import { Group } from 'three';
-import { deserializeEuler, deserializeVector3 } from '../../util/store/three-seiralize';
+import {
+  deserializeEuler,
+  deserializeVector3,
+  serializeEuler,
+  serializeVector3,
+} from '../../util/store/three-seiralize';
 import figureComposerSlice from '../../store/threed/figure-composer/slice';
+import { BoneManupilators } from './boneManupilators';
+import camelcase from 'camelcase';
+import { useFrame } from 'react-three-fiber';
 
 const FigureComposer = (
   props: { uuid: string } & {
@@ -33,7 +43,6 @@ const FigureComposer = (
   const [hovered, setHovered] = useState(false);
   const vrmRef = useRef<VRM>(null);
   const meshRef = useRef<Group>(null);
-  const transformControlRef = useRef<any>(null);
   const dispatch = useDispatch();
 
   const tool = useSelector((state: RootState) => {
@@ -115,6 +124,33 @@ const FigureComposer = (
       console.log((e.loaded / e.total) * 100 + '%');
     },
     loadedVrm => {
+      // Pose情報をRedux Storeに入れる
+      const getBoneMap = (targetVRM: VRM) => {
+        const boneState: VRMPoseState = {};
+        for (const boneName in VRMHumanBoneName) {
+          const name = camelcase(boneName) as VRMHumanBoneName;
+          console.log('name is ' + name);
+          const boneNode = targetVRM.humanoid.getNormalizedBoneNode(name);
+          console.log('boneNode name is ' + boneNode?.name);
+          if (boneNode == null) {
+            console.log(`bone name ${name} is null`);
+            continue;
+          }
+          const pose: VRMPoseNodeState = {
+            position: serializeVector3(boneNode.position),
+            scale: serializeVector3(boneNode.scale),
+            rotation: serializeEuler(boneNode.rotation),
+          };
+          boneState[name] = pose;
+        }
+
+        return boneState;
+      };
+
+      const vrmPose = getBoneMap(loadedVrm);
+      console.log(vrmPose);
+      dispatch(FigureComposerSlice.actions.setVRMPose({ id: props.uuid, pose: vrmPose }));
+      // Materialのデータを保存
       const setMaterialUserData = (obj: THREE.Mesh, material: unknown) => {
         if (obj.userData.originalColor == null)
           obj.userData.originalColor = new Array<THREE.Color>();
@@ -154,6 +190,7 @@ const FigureComposer = (
   // hover時、select時に見た目を変更する
   useEffect(() => {
     const setMaterial = (obj: THREE.Mesh, material: unknown, hover: boolean) => {
+      if (!obj.userData.isVrmModel) return;
       if (material instanceof MToonMaterial) {
         // MToonMaterialの場合
         if (composerState.composerSelectState === ComposerSelectState.selected) {
@@ -201,6 +238,14 @@ const FigureComposer = (
     }
   }, [tool.tool]);
 
+  const isRenderBoneManupilator = useMemo(() => {
+    if (tool.tool.matches({ target_selected: 'pose' })) {
+      return true;
+    } else {
+      return false;
+    }
+  }, [tool.tool]);
+
   // 即時反応が欲しいので、stateにしてない
   let mouseUpOnTransform = true;
   return (
@@ -229,15 +274,19 @@ const FigureComposer = (
             object={vrm.scene}
             ref={vrmRef}
             onPointerDown={(event: ThreeEvent<PointerEvent> | undefined) => {
-              event?.stopPropagation();
               objectToolHandler.figureComposerHandlers?.onMouseDown?.(props.uuid, event);
             }}
             onPointerUp={(event: ThreeEvent<PointerEvent> | undefined) => {
-              event?.stopPropagation();
               objectToolHandler.figureComposerHandlers?.onMouseUp?.(props.uuid, event);
             }}
           />
         </group>
+        (vrm &&
+        <BoneManupilators
+          uuid={props.uuid}
+          targetVRM={vrm}
+          enable={isRenderBoneManupilator}></BoneManupilators>
+        )
       </group>
     )) || <></>
   );

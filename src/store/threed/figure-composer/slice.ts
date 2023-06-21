@@ -15,11 +15,13 @@ export type VRMPoseNodeState = {
   rotation: SerializedEuler;
   scale: SerializedVector3;
 };
+
 export type VRMEntity = {
   translate: SerializedVector3;
   scale: SerializedVector3;
   rotation: SerializedEuler;
-  vrmPose: [VRMHumanBoneName, VRMPoseNodeState][];
+  vrmPose: VRMPoseState;
+  vrmBoneSelectState: VRMBoneSelectState;
 };
 
 export enum composerRenderState {
@@ -30,6 +32,11 @@ export enum composerRenderState {
 }
 
 export enum ComposerSelectState {
+  none = 0,
+  selected = 1,
+}
+
+export enum BoneSelectState {
   none = 0,
   selected = 1,
 }
@@ -56,6 +63,14 @@ export type FigureComposersState = {
   [key: string]: FigureComposerEntity;
 };
 
+export type VRMPoseState = {
+  [key: string]: VRMPoseNodeState;
+};
+
+export type VRMBoneSelectState = {
+  [key: string]: BoneSelectState;
+};
+
 export const initialState: FigureComposersState = {};
 
 const figureComposerSlice = createSlice({
@@ -71,7 +86,8 @@ const figureComposerSlice = createSlice({
           translate: serializeVector3(new THREE.Vector3()),
           scale: serializeVector3(new THREE.Vector3()),
           rotation: serializeEuler(new THREE.Euler()),
-          vrmPose: [],
+          vrmPose: {},
+          vrmBoneSelectState: {},
         },
         uuid: uuid,
         renderState:
@@ -82,6 +98,23 @@ const figureComposerSlice = createSlice({
         composerSelectState: ComposerSelectState.none,
       };
       state[uuid] = composerState;
+    },
+    setVRMPose: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        pose: VRMPoseState;
+      }>,
+    ) => {
+      const { id, pose } = action.payload;
+      Object.keys(pose).map(poseKey => {
+        const vrmState = {
+          position: pose[poseKey].position,
+          rotation: pose[poseKey].rotation,
+          scale: pose[poseKey].scale,
+        };
+        state[id].vrmState.vrmPose[poseKey] = vrmState;
+      });
     },
     translateComposer: (
       state,
@@ -116,6 +149,24 @@ const figureComposerSlice = createSlice({
         state[key].composerSelectState = ComposerSelectState.none;
       });
     },
+    changeBoneSelectState: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        boneName: string;
+        selectState: BoneSelectState;
+      }>,
+    ) => {
+      const { id, boneName, selectState } = action.payload;
+      state[id].vrmState.vrmBoneSelectState[boneName] = selectState;
+    },
+    clearAlBonelSelectState: state => {
+      Object.keys(state).forEach(k => {
+        Object.keys(state[k].vrmState.vrmBoneSelectState).forEach(key => {
+          state[k].vrmState.vrmBoneSelectState[key] = BoneSelectState.none;
+        });
+      });
+    },
     changeDisplayState: (
       state,
       action: PayloadAction<{ id: string; displayState: number }>,
@@ -125,43 +176,5 @@ const figureComposerSlice = createSlice({
     },
   },
 });
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const _vrmSetter = (vrm: VRM, uuid: string) => {
-  const targetUUID = uuid;
-
-  const boneState = new Map<VRMHumanBoneName, VRMPoseNodeState>();
-  for (const boneName in VRMHumanBoneName) {
-    const name = boneName as VRMHumanBoneName;
-    const boneNode = vrm.humanoid.getNormalizedBoneNode(name);
-    if (boneNode == null) {
-      continue;
-    }
-    const pose: VRMPoseNodeState = {
-      position: serializeVector3(boneNode.position),
-      scale: serializeVector3(boneNode.scale),
-      rotation: serializeEuler(boneNode.rotation),
-    };
-    boneState.set(name, pose);
-  }
-
-  const vrmPose: Map<VRMHumanBoneName, VRMPoseNodeState> = boneState;
-
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const _composerState = {
-    vrmState: {
-      translate: vrm.scene.position,
-      scale: vrm.scene.scale,
-      rotation: vrm.scene.rotation,
-      vrmPose,
-    },
-    uuid: targetUUID ? targetUUID : vrm.scene.uuid,
-    renderState:
-      composerRenderState.renderVRM &
-      composerRenderState.renderPoseBone &
-      composerRenderState.renderControlCube &
-      composerRenderState.renderAdditionalFacePoint,
-  };
-};
 
 export default figureComposerSlice;

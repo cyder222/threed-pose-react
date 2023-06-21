@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useThree, useFrame } from '@react-three/fiber';
+import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
 
 // 何もないところをクリックした時の処理を追加するために使うコンポーネント

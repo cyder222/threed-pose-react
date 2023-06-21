@@ -14,6 +14,11 @@ import {
   createObjectSelectedToolHandler,
   createObjectSelectToolHandler,
 } from '../../../../hooks/tools/handlers/object-select-tool';
+import {
+  createObjectBoneSelectToolHandler,
+  createObjectBoneSelectedToolHandler,
+} from '../../../../hooks/tools/handlers/object-bone-select-tool';
+import { createObjectBoneMoveToolHandler } from '../../../../hooks/tools/handlers/object-bone-move-tool';
 import { createHandler } from '../../../../hooks/tools/handlers/scene-edit-tool-functions';
 import toolSlice from '../slice';
 
@@ -138,6 +143,7 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
       },
     },
     target_selected: {
+      initial: 'move',
       entry: context => {
         context.handlerCreator = createObjectSelectedToolHandler;
       },
@@ -233,12 +239,19 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
           initial: 'pose_idle',
           states: {
             pose_idle: {
+              entry: context => {
+                context.handlerCreator = createObjectBoneSelectToolHandler;
+              },
               on: {
                 SELECT: 'pose_target_selected',
                 CANCEL: '#tool.target_selected',
               },
             },
             pose_target_selected: {
+              entry: context => {
+                context.handlerCreator = createObjectBoneSelectedToolHandler;
+              },
+              initial: 'pose_target_rotate',
               on: {
                 MOVE: 'pose_target_selected.pose_target_move',
                 ROTATE: 'pose_target_selected.pose_target_rotate',
@@ -253,9 +266,27 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
                   },
                 },
                 pose_target_rotate: {
+                  entry: context => {
+                    context.handlerCreator = createObjectBoneMoveToolHandler;
+                  },
+                  initial: 'wait',
                   states: {
-                    wait: {},
-                    processing: {},
+                    wait: {
+                      on: {
+                        START_TOOL_OPERATION: 'processing',
+                      },
+                    },
+                    processing: {
+                      on: {
+                        END_TOOL_OPERATION: 'wait',
+                      },
+                      entry: context => {
+                        context.isProcessing = true;
+                      },
+                      exit: context => {
+                        context.isProcessing = false;
+                      },
+                    },
                   },
                 },
                 pose_target_scale: {
