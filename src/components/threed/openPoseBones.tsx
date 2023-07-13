@@ -23,8 +23,6 @@ const OpenPoseBoneMeshLine = (props: {
   const endCubeRef = useRef<Mesh>(null);
   const { size } = useThree();
   const [faceObject, setFaceObject] = useState<THREE.SkinnedMesh | undefined>();
-  const [stPosition, setStPosition] = useState<THREE.Vector3>();
-  const [edPosition, setEdPosition] = useState<THREE.Vector3>();
   const startBone = props.targetVRM.humanoid.getRawBoneNode(
     props.targetBoneFirst as VRMHumanBoneName,
   );
