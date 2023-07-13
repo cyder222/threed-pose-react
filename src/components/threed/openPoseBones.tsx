@@ -78,6 +78,12 @@ const OpenPoseBoneMeshLine = (props: {
     Nose: 1980, //composerState.additionInfomationOpenPoseFace?.Nose?.x,
   };
 
+  /**
+   * 頂点indexから、bone変換を考えた上で、頂点のワールド座標を返却する。
+   * @param triangleIndex 頂点index
+   * @param faceObj 対象のskinnedmeshオブジェクト
+   * @returns THREE.Vector3 対応する頂点座標
+   */
   const getMeshPosition = (triangleIndex: number, faceObj: THREE.SkinnedMesh) => {
     const geometry = faceObj.geometry;
     if (geometry instanceof THREE.BufferGeometry) {
@@ -95,12 +101,11 @@ const OpenPoseBoneMeshLine = (props: {
       const skinnedVertex = new THREE.Vector3();
       for (let i = 0; i < 4; ++i) {
         // ボーンの変換を取得
-        // ボーンの変換を取得
         const bone = faceObj.skeleton.bones[indices.getComponent(i)];
         const bindMatrix = faceObj.skeleton.boneInverses[indices.getComponent(i)];
         const boneMatrix = bone.matrixWorld;
 
-        // ローカル頂点座標にボーンの変換とウェイトを適用
+        // 頂点座標に周りのボーンの逆変換、ボーンの変換とウェイトを適用
         const weightedVertex = new THREE.Vector3()
           .copy(localPosition)
           .applyMatrix4(bindMatrix)
@@ -124,9 +129,7 @@ const OpenPoseBoneMeshLine = (props: {
       if (startTriangleIndex) {
         startPosition = getMeshPosition(startTriangleIndex, faceObject);
 
-        startPosition = startPosition
-          ? faceObject.localToWorld(startPosition)
-          : undefined;
+        startPosition = startPosition ? startPosition : undefined;
       }
     }
 
@@ -134,7 +137,7 @@ const OpenPoseBoneMeshLine = (props: {
       const endTriangleIndex = facePoint[props.targetBoneNext as additionalOpenPosePoint];
       if (endTriangleIndex) {
         endPosition = getMeshPosition(endTriangleIndex, faceObject);
-        endPosition = endPosition ? faceObject.localToWorld(endPosition) : undefined;
+        endPosition = endPosition ? endPosition : undefined;
       }
     }
     if (!startPosition || !endPosition) return;
