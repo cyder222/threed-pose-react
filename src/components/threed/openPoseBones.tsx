@@ -1,44 +1,13 @@
-import { TransformControls } from '@react-three/drei';
 import * as THREE from 'three';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import {
-  Box3,
-  BufferGeometry,
-  Color,
-  Euler,
-  Group,
-  Matrix4,
-  Mesh,
-  MeshStandardMaterial,
-  Object3D,
-  Quaternion,
-  Vector3,
-} from 'three';
-import { extend, useThree } from 'react-three-fiber';
+import { useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Color, Euler, Mesh, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
+import { useThree } from 'react-three-fiber';
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline';
 import { RootState } from '../../store/create-store';
-import FigureComposerSlice, {
-  AdditionalInfomationOpenPoseFace,
-  additionalOpenPosePoint,
-  BoneSelectState,
-  composerRenderState,
-  ComposerSelectState,
-  VRMPoseNodeState,
-  VRMPoseState,
-} from '../../store/threed/figure-composer/slice';
+import { additionalOpenPosePoint } from '../../store/threed/figure-composer/slice';
 import { FigureComposerListSelector } from '../../store/threed/figure-composer/selectors';
-import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
-import {
-  deserializeEuler,
-  deserializeVector3,
-  serializeEuler,
-  serializeVector3,
-} from '../../util/store/three-seiralize';
 import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
-import { toolSelector } from '../../store/threed/tool/selectors';
-import camelcase from 'camelcase';
-import { ThreeEvent } from 'react-three-fiber';
 import { Entasis } from './basic-geometry/Entasis';
 
 const OpenPoseBoneMeshLine = (props: {
@@ -202,6 +171,7 @@ const OpenPoseBoneMeshLine = (props: {
   );
 };
 
+// 今は使ってないが、将来的に入れ替えるために一旦置いている
 const OpenPoseBone = (props: {
   uuid: string;
   targetBoneFirst: string;
