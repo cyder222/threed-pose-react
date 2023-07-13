@@ -48,18 +48,95 @@ const OpenPoseBoneMeshLine = (props: {
   color: Color;
   targetVRM: VRM;
 }) => {
+  const faceObjectName = 'Face';
   const meshRef = useRef<Mesh>(null);
   const { size } = useThree();
+  const [faceObject, setFaceObject] = useState<THREE.SkinnedMesh | undefined>();
+  const [stPosition, setStPosition] = useState<THREE.Vector3>();
+  const [edPosition, setEdPosition] = useState<THREE.Vector3>();
   const startBone = props.targetVRM.humanoid.getRawBoneNode(
     props.targetBoneFirst as VRMHumanBoneName,
   );
   const endBone = props.targetVRM.humanoid.getRawBoneNode(
     props.targetBoneNext as VRMHumanBoneName,
   );
+  const composerState = useSelector((state: RootState) => {
+    return FigureComposerListSelector.getById(state, props.uuid) || null;
+  });
 
   useEffect(() => {
-    const startPosition = startBone?.getWorldPosition(new Vector3());
-    const endPosition = endBone?.getWorldPosition(new Vector3());
+    setFaceObject(
+      props.targetVRM.scene.getObjectByName(faceObjectName) as THREE.SkinnedMesh,
+    );
+  }, []);
+
+  const facePoint = {
+    Lear: 875, //composerState.additionInfomationOpenPoseFace?.Lear?.x,
+    Rear: 928, //composerState.additionInfomationOpenPoseFace?.Rear?.x,
+    Leye: 1363, //composerState.additionInfomationOpenPoseFace?.Leye?.x,
+    Reye: 1457, //composerState.additionInfomationOpenPoseFace?.Reye?.x,
+    Nose: 1980, //composerState.additionInfomationOpenPoseFace?.Nose?.x,
+  };
+
+  const getMeshPosition = (triangleIndex: number, faceObj: THREE.SkinnedMesh) => {
+    const geometry = faceObj.geometry;
+    if (geometry instanceof THREE.BufferGeometry) {
+      const positionAttribute = geometry.attributes.position;
+      const skinIndices = geometry.attributes.skinIndex as THREE.BufferAttribute;
+      const skinWeights = geometry.attributes.skinWeight as THREE.BufferAttribute;
+      // ボーンインデックスとウェイトを取得
+      const indices = new THREE.Vector4().fromBufferAttribute(skinIndices, triangleIndex);
+      const weights = new THREE.Vector4().fromBufferAttribute(skinWeights, triangleIndex);
+      const localPosition = new THREE.Vector3().fromBufferAttribute(
+        positionAttribute as THREE.BufferAttribute,
+        triangleIndex,
+      );
+      // ワールド座標系での頂点座標を計算
+      const skinnedVertex = new THREE.Vector3();
+      for (let i = 0; i < 4; ++i) {
+        // ボーンの変換を取得
+        // ボーンの変換を取得
+        const bone = faceObj.skeleton.bones[indices.getComponent(i)];
+        const bindMatrix = faceObj.skeleton.boneInverses[indices.getComponent(i)];
+        const boneMatrix = bone.matrixWorld;
+
+        // ローカル頂点座標にボーンの変換とウェイトを適用
+        const weightedVertex = new THREE.Vector3()
+          .copy(localPosition)
+          .applyMatrix4(bindMatrix)
+          .applyMatrix4(boneMatrix)
+          .multiplyScalar(weights.getComponent(i));
+
+        // 加重平均を取る
+        skinnedVertex.add(weightedVertex);
+      }
+      return skinnedVertex;
+    }
+  };
+
+  useEffect(() => {
+    let startPosition = startBone?.getWorldPosition(new Vector3());
+    let endPosition = endBone?.getWorldPosition(new Vector3());
+    if (!faceObject) return;
+    if (!startPosition) {
+      const startTriangleIndex =
+        facePoint[props.targetBoneFirst as additionalOpenPosePoint];
+      if (startTriangleIndex) {
+        startPosition = getMeshPosition(startTriangleIndex, faceObject);
+
+        startPosition = startPosition
+          ? faceObject.localToWorld(startPosition)
+          : undefined;
+      }
+    }
+
+    if (!endPosition) {
+      const endTriangleIndex = facePoint[props.targetBoneNext as additionalOpenPosePoint];
+      if (endTriangleIndex) {
+        endPosition = getMeshPosition(endTriangleIndex, faceObject);
+        endPosition = endPosition ? faceObject.localToWorld(endPosition) : undefined;
+      }
+    }
     if (!startPosition || !endPosition) return;
     const points = [startPosition, endPosition];
     const line = new MeshLineGeometry();
@@ -70,12 +147,41 @@ const OpenPoseBoneMeshLine = (props: {
       resolution: new THREE.Vector2(size.width, size.height),
     });
     if (!meshRef.current) return;
+    meshRef.current.geometry.dispose();
     meshRef.current.geometry = line;
     meshRef.current.material = material;
   }, [
     meshRef.current,
     ...(startBone?.getWorldPosition(new Vector3()).toArray() || []),
     ...(endBone?.getWorldPosition(new Vector3()).toArray() || []),
+    composerState.additionInfomationOpenPoseFace &&
+    composerState.additionInfomationOpenPoseFace.Lear
+      ? Object.values(composerState.additionInfomationOpenPoseFace.Lear)
+      : null,
+    composerState.additionInfomationOpenPoseFace &&
+    composerState.additionInfomationOpenPoseFace.Rear
+      ? Object.values(composerState.additionInfomationOpenPoseFace.Rear)
+      : null,
+    composerState.additionInfomationOpenPoseFace &&
+    composerState.additionInfomationOpenPoseFace.Nose
+      ? Object.values(composerState.additionInfomationOpenPoseFace.Nose)
+      : null,
+    composerState.additionInfomationOpenPoseFace &&
+    composerState.additionInfomationOpenPoseFace.Leye
+      ? Object.values(composerState.additionInfomationOpenPoseFace.Leye)
+      : null,
+    composerState.additionInfomationOpenPoseFace &&
+    composerState.additionInfomationOpenPoseFace.Reye
+      ? Object.values(composerState.additionInfomationOpenPoseFace.Reye)
+      : null,
+    faceObject
+      ? faceObject.localToWorld(
+          new THREE.Vector3().fromBufferAttribute(
+            faceObject.geometry.attributes.position as THREE.BufferAttribute,
+            facePoint.Lear,
+          ),
+        ).x
+      : null,
   ]);
 
   return (

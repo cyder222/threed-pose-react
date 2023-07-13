@@ -40,13 +40,9 @@ export enum BoneSelectState {
   none = 0,
   selected = 1,
 }
-
-export type AdditionalInfomationFace = {
-  [partName in 'Lear' | 'Nose' | 'Rear' | 'Leye' | 'Reye']: {
-    a: number;
-    b: number;
-    c: number;
-  };
+export type additionalOpenPosePoint = 'Lear' | 'Nose' | 'Rear' | 'Leye' | 'Reye';
+export type AdditionalInfomationOpenPoseFace = {
+  [partName in additionalOpenPosePoint]: SerializedVector3 | null;
 };
 
 export type FigureComposerEntity = {
@@ -55,7 +51,7 @@ export type FigureComposerEntity = {
 
   vrmState: VRMEntity;
   renderState: number; // composerRenderStateの&演算で入れる、
-  additionInfomationFace?: AdditionalInfomationFace;
+  additionInfomationOpenPoseFace?: AdditionalInfomationOpenPoseFace;
   composerSelectState: ComposerSelectState;
 };
 
@@ -96,6 +92,13 @@ const figureComposerSlice = createSlice({
           composerRenderState.renderControlCube &
           composerRenderState.renderAdditionalFacePoint,
         composerSelectState: ComposerSelectState.none,
+        additionInfomationOpenPoseFace: {
+          Lear: null,
+          Rear: null,
+          Nose: serializeVector3(new THREE.Vector3(1875, 1988, 1877)),
+          Leye: null,
+          Reye: null,
+        },
       };
       state[uuid] = composerState;
     },
@@ -115,6 +118,27 @@ const figureComposerSlice = createSlice({
         };
         state[id].vrmState.vrmPose[poseKey] = vrmState;
       });
+    },
+    setadditionInfomationOpenPoseFace: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        partName: additionalOpenPosePoint;
+        point: THREE.Vector3;
+      }>,
+    ) => {
+      const { id, partName, point } = action.payload;
+      if (!state[id].additionInfomationOpenPoseFace) {
+        state[id].additionInfomationOpenPoseFace = {
+          Lear: null,
+          Rear: null,
+          Nose: serializeVector3(new THREE.Vector3(1875, 1988, 1877)),
+          Leye: null,
+          Reye: null,
+        };
+      }
+
+      state[id].additionInfomationOpenPoseFace![partName] = serializeVector3(point);
     },
     translateComposer: (
       state,
