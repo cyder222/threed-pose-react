@@ -26,6 +26,7 @@ import figureComposerSlice from '../../store/threed/figure-composer/slice';
 import { BoneManupilators } from './boneManupilators';
 import camelcase from 'camelcase';
 import { useFrame } from 'react-three-fiber';
+import { OpenPoseBones } from './openPoseBones';
 
 const FigureComposer = (
   props: { uuid: string } & {
@@ -269,7 +270,7 @@ const FigureComposer = (
               if (mouseUpOnTransform) intersects.length = 0;
             }}></TransformControls>
         )}
-        <group ref={meshRef}>
+        <group ref={meshRef} visible={!tool.tool.matches('target_selecting')}>
           <primitive
             object={vrm.scene}
             ref={vrmRef}
@@ -286,7 +287,7 @@ const FigureComposer = (
           uuid={props.uuid}
           targetVRM={vrm}
           enable={isRenderBoneManupilator}></BoneManupilators>
-        )
+        ) (vrm && <OpenPoseBones uuid={props.uuid} targetVRM={vrm}></OpenPoseBones>)
       </group>
     )) || <></>
   );
