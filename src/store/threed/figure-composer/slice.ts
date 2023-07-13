@@ -93,11 +93,11 @@ const figureComposerSlice = createSlice({
           composerRenderState.renderAdditionalFacePoint,
         composerSelectState: ComposerSelectState.none,
         additionInfomationOpenPoseFace: {
-          Lear: null,
-          Rear: null,
-          Nose: serializeVector3(new THREE.Vector3(1875, 1988, 1877)),
-          Leye: null,
-          Reye: null,
+          Lear: serializeVector3(new THREE.Vector3(875, 875, 875)),
+          Rear: serializeVector3(new THREE.Vector3(928, 928, 928)),
+          Nose: serializeVector3(new THREE.Vector3(1980, 1988, 1877)),
+          Leye: serializeVector3(new THREE.Vector3(1363, 1363, 1363)),
+          Reye: serializeVector3(new THREE.Vector3(1457, 1457, 1457)),
         },
       };
       state[uuid] = composerState;

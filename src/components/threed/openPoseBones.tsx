@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Color, Euler, Mesh, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
 import { useThree } from 'react-three-fiber';
@@ -39,13 +39,21 @@ const OpenPoseBoneMeshLine = (props: {
     );
   }, []);
 
-  const facePoint = {
-    Lear: 875, //composerState.additionInfomationOpenPoseFace?.Lear?.x,
-    Rear: 928, //composerState.additionInfomationOpenPoseFace?.Rear?.x,
-    Leye: 1363, //composerState.additionInfomationOpenPoseFace?.Leye?.x,
-    Reye: 1457, //composerState.additionInfomationOpenPoseFace?.Reye?.x,
-    Nose: 1980, //composerState.additionInfomationOpenPoseFace?.Nose?.x,
-  };
+  const facePoint = useMemo(() => {
+    return {
+      Lear: composerState.additionInfomationOpenPoseFace?.Lear?.x,
+      Rear: composerState.additionInfomationOpenPoseFace?.Rear?.x,
+      Leye: composerState.additionInfomationOpenPoseFace?.Leye?.x,
+      Reye: composerState.additionInfomationOpenPoseFace?.Reye?.x,
+      Nose: composerState.additionInfomationOpenPoseFace?.Nose?.x,
+    };
+  }, [
+    composerState.additionInfomationOpenPoseFace?.Lear?.x,
+    composerState.additionInfomationOpenPoseFace?.Rear?.x,
+    composerState.additionInfomationOpenPoseFace?.Leye?.x,
+    composerState.additionInfomationOpenPoseFace?.Reye?.x,
+    composerState.additionInfomationOpenPoseFace?.Nose?.x,
+  ]);
 
   /**
    * 頂点indexから、bone変換を考えた上で、頂点のワールド座標を返却する。
@@ -150,7 +158,7 @@ const OpenPoseBoneMeshLine = (props: {
     composerState.additionInfomationOpenPoseFace.Reye
       ? Object.values(composerState.additionInfomationOpenPoseFace.Reye)
       : null,
-    faceObject
+    faceObject && facePoint.Lear
       ? faceObject.localToWorld(
           new THREE.Vector3().fromBufferAttribute(
             faceObject.geometry.attributes.position as THREE.BufferAttribute,
