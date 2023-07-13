@@ -19,6 +19,8 @@ const OpenPoseBoneMeshLine = (props: {
 }) => {
   const faceObjectName = 'Face';
   const meshRef = useRef<Mesh>(null);
+  const startCubeRef = useRef<Mesh>(null);
+  const endCubeRef = useRef<Mesh>(null);
   const { size } = useThree();
   const [faceObject, setFaceObject] = useState<THREE.SkinnedMesh | undefined>();
   const [stPosition, setStPosition] = useState<THREE.Vector3>();
@@ -122,8 +124,12 @@ const OpenPoseBoneMeshLine = (props: {
     meshRef.current.geometry.dispose();
     meshRef.current.geometry = line;
     meshRef.current.material = material;
+    if (startCubeRef.current) startCubeRef.current.position.copy(startPosition);
+    if (endCubeRef.current) endCubeRef.current.position.copy(endPosition);
   }, [
     meshRef.current,
+    startCubeRef.current,
+    endCubeRef.current,
     ...(startBone?.getWorldPosition(new Vector3()).toArray() || []),
     ...(endBone?.getWorldPosition(new Vector3()).toArray() || []),
     composerState.additionInfomationOpenPoseFace &&
@@ -159,11 +165,11 @@ const OpenPoseBoneMeshLine = (props: {
   return (
     <>
       <mesh ref={meshRef}></mesh>
-      <mesh position={startBone?.getWorldPosition(new Vector3())}>
+      <mesh ref={startCubeRef}>
         <sphereGeometry args={[0.02, 30, 30]} />
         <meshBasicMaterial color={props.color} />
       </mesh>
-      <mesh position={endBone?.getWorldPosition(new Vector3())}>
+      <mesh ref={endCubeRef}>
         <sphereGeometry args={[0.02, 30, 30]} />
         <meshBasicMaterial color={props.color} />
       </mesh>
