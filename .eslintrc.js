@@ -11,6 +11,7 @@ module.exports = {
     // TypeScript
     '@typescript-eslint/explicit-member-accessibility': 'off',
     '@typescript-eslint/no-object-literal-type-assertion': 'off',
+    '@typescript-eslint/ban-types': 'off',
     // v4 changes
     'no-use-before-define': 'off',
     'no-shadow': 'off',
