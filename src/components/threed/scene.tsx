@@ -8,13 +8,13 @@ import { useDispatch, useSelector } from 'react-redux';
 import FigureComposer from './figure-composer';
 import * as THREE from 'three';
 import { toolSelector } from '../../store/threed/tool/selectors';
-import { ThreeEvent } from 'react-three-fiber';
 import { EmptyObject } from './empty-object';
 
 import Toolbox from './ui/tool-box';
 import useSceneEditTool from '../../hooks/tools/use-scene-edit-tool';
 import { VRM } from '@pixiv/three-vrm';
 import { Group } from 'three';
+import { SdSideMenu } from '../ui/sidebar/sd-generate';
 
 interface VrmRefs {
   [key: string]: React.RefObject<VRM>;
@@ -77,7 +77,11 @@ const Scene = () => {
   }, [tool.tool.context.isProcessing]);
 
   return (
-    <main style={{ width: '100%', height: '100%' }}>
+    <main
+      style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'row' }}>
+      <div style={{ width: '30%', borderRight: '1px solid' }}>
+        <SdSideMenu></SdSideMenu>
+      </div>
       <Canvas ref={canvas} camera={camera}>
         <OrbitControls
           enablePan={true}
