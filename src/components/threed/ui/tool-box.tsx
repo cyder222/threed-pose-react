@@ -4,7 +4,7 @@ import toolSlice from '../../../store/threed/tool/slice';
 import { toolSelector } from '../../../store/threed/tool/selectors';
 import { RootState } from '../../../store/create-store';
 import { useRef } from 'react';
-import { Canvas, useFrame } from 'react-three-fiber';
+import { Canvas } from 'react-three-fiber';
 import { Html, Billboard } from '@react-three/drei';
 import { toolService } from '../../../store/threed/tool/machine/object-tool-machine';
 import { Box3, Group, Vector3 } from 'three';
@@ -223,12 +223,12 @@ const ObjectToolBox = (props: { targetUUID: string; target?: Group }) => {
       {getToolboxType === 'objectControlTool' && (
         <TranslationToolbox
           targetUUID={props.targetUUID}
-          position={new Vector3(0, 2, 0)}></TranslationToolbox>
+          position={new Vector3(0, 1, 0)}></TranslationToolbox>
       )}
       {getToolboxType === 'poseControlMode' && (
         <PoseToolBox
           targetUUID={props.targetUUID}
-          position={new Vector3(0, 2, 0)}></PoseToolBox>
+          position={new Vector3(0, 1, 0)}></PoseToolBox>
       )}
     </>
   );
