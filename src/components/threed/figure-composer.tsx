@@ -25,7 +25,6 @@ import {
 import figureComposerSlice from '../../store/threed/figure-composer/slice';
 import { BoneManupilators } from './boneManupilators';
 import camelcase from 'camelcase';
-import { useFrame } from 'react-three-fiber';
 import { OpenPoseBones } from './openPoseBones';
 
 const FigureComposer = (
@@ -169,7 +168,6 @@ const FigureComposer = (
 
       // 色を変えるために、現在のMaterialデータをUserDataに保存
       loadedVrm.scene.traverse(obj => {
-        console.log(obj);
         if (obj instanceof THREE.Mesh) {
           obj.userData.isVrmModel = true;
           if (Array.isArray(obj.material)) {
