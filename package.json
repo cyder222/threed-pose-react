@@ -86,6 +86,7 @@
     "husky": "^8.0.3",
     "lint-staged": "^13.1.2",
     "prettier": "^2.8.4",
-    "vite": "^4.4.7"
+    "vite": "^4.4.7",
+    "vite-plugin-svgr": "^3.2.0"
   }
 }
