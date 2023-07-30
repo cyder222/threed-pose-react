@@ -5926,6 +5926,13 @@ uuid@^9.0.0:
   resolved "https://registry.yarnpkg.com/uuid/-/uuid-9.0.0.tgz#592f550650024a38ceb0c562f2f6aa435761efb5"
   integrity sha512-MXcSTerfPa4uqyzStbRoTgt5XIe3x5+42+q1sDuy3R5MDk66URdLMOZe5aPX/SQd+kuYAh0FdP/pO28IkQyTeg==
 
+vite-plugin-glsl@^1.1.2:
+  version "1.1.2"
+  resolved "https://registry.yarnpkg.com/vite-plugin-glsl/-/vite-plugin-glsl-1.1.2.tgz#7f1750bb90f4e70b3459039e1b1d201bb099d519"
+  integrity sha512-zmXsfc1vn2MlYve9t3FAoWuhLyoCkNS1TuQL+TkXZL7tGmBjRErp10eNYxcse5tK9oUC5MyJpNc4ElpQnx8DoA==
+  dependencies:
+    "@rollup/pluginutils" "^5.0.2"
+
 vite-plugin-svgr@^3.2.0:
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/vite-plugin-svgr/-/vite-plugin-svgr-3.2.0.tgz#920375aaf6635091c9ac8e467825f92d32544476"
