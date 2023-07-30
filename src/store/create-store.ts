@@ -34,12 +34,12 @@ export const store = configureStore({
     const middleware = getDefaultMiddleWare({
       serializableCheck: false,
     });
-    if (process.env.DEV_MODE !== 'production') {
+    if (import.meta.env.MODE !== 'production') {
       middleware.push(logger);
     }
     return middleware;
   },
-  devTools: process.env.DEV_MODE !== 'production',
+  devTools: import.meta.env.MODE !== 'production',
 });
 
 toolMachineInitlizer(toolService, store);
