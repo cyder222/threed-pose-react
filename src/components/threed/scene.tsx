@@ -48,7 +48,7 @@ const Scene = () => {
   const [orbitEnable, setOrbitEnable] = useState(true);
   const canvas = useRef(null);
   const [camera, setCamera] = useState(
-    new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.1, 10000),
+    new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.5, 20),
   );
   const [glRender, setGlRender] = useState<THREE.WebGLRenderer | null>(null);
   const [glScene, setGlScene] = useState<THREE.Scene | null>(null);
@@ -88,6 +88,7 @@ const Scene = () => {
       <Canvas
         ref={canvas}
         camera={camera}
+        gl={{ logarithmicDepthBuffer: true }}
         onCreated={state => {
           // 生成時に、外に渡す用のgl, camera, sceneをセットする
           setGlRender(state.gl);
@@ -96,8 +97,8 @@ const Scene = () => {
         }}>
         <OrbitControls
           enablePan={true}
-          minDistance={2}
-          maxDistance={100}
+          minDistance={1}
+          maxDistance={1000}
           enabled={orbitEnable}
           camera={camera}></OrbitControls>
         <ambientLight />

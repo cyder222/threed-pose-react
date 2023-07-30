@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import vertexShader from './vertexShader.vert';
-import fragmentShader from './fragmentShader.frag';
+import vertexShader from './vertex-shader.vert';
+import fragmentShader from './fragment-shader.frag';
 
 // デプスシェーダ
 export const depthShader: THREE.Shader = {
   uniforms: {
-    nearClip: { value: 1 },
-    farClip: { value: 1000 },
+    nearClip: { value: 0.5 },
+    farClip: { value: 5 },
   },
   vertexShader: vertexShader,
   fragmentShader: fragmentShader,

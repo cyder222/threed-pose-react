@@ -26,6 +26,7 @@ import figureComposerSlice from '../../store/threed/figure-composer/slice';
 import { BoneManupilators } from './boneManupilators';
 import camelcase from 'camelcase';
 import { OpenPoseBones } from './openPoseBones';
+import { depthMaterial } from './materials/depth-material/depth-material';
 
 const FigureComposer = (
   props: { uuid: string } & {
@@ -188,39 +189,23 @@ const FigureComposer = (
 
   // hover時、select時に見た目を変更する
   useEffect(() => {
-    const setMaterial = (obj: THREE.Mesh, material: unknown, hover: boolean) => {
+    const newMat = new THREE.MeshDepthMaterial();
+    const setMaterial = (obj: THREE.Mesh, hover: boolean) => {
       if (!obj.userData.isVrmModel) return;
-      if (material instanceof MToonMaterial) {
-        // MToonMaterialの場合
-        if (composerState.composerSelectState === ComposerSelectState.selected) {
-          material.uniforms.emissive.value.set(0x0000ff);
-          return;
+
+      if (composerState.composerSelectState === ComposerSelectState.selected) {
+        if (Array.isArray(obj.material)) {
+          obj.material = obj.material.map(() => newMat);
+        } else {
+          obj.material = newMat;
         }
-        hover
-          ? material.uniforms.emissive.value.set(0x0000ff)
-          : (material.uniforms.emissive.value =
-              obj.userData.originalColor[material.uuid].clone());
-      } else {
-        // MeshStandardMaterialやMeshBasicMaterialの場合
-        const mat = material as THREE.MeshBasicMaterial;
-        if (composerState.composerSelectState === ComposerSelectState.selected) {
-          mat.color.set(0x0000ff);
-          return;
-        }
-        hover
-          ? mat.color.set(0x0000ff)
-          : (mat.color = obj.userData.originalColor[mat.uuid].clone());
+        return;
       }
     };
+
     vrm?.scene?.traverse(obj => {
       if (obj instanceof THREE.Mesh) {
-        if (Array.isArray(obj.material)) {
-          obj.material.forEach((material: unknown) => {
-            setMaterial(obj, material, hovered);
-          });
-        } else {
-          setMaterial(obj, obj.material, hovered);
-        }
+        setMaterial(obj, hovered);
       }
     });
   }, [hovered, composerState.composerSelectState]);
@@ -285,7 +270,8 @@ const FigureComposer = (
           uuid={props.uuid}
           targetVRM={vrm}
           enable={isRenderBoneManupilator}></BoneManupilators>
-        ) (vrm && <OpenPoseBones uuid={props.uuid} targetVRM={vrm}></OpenPoseBones>)
+        ) (vrm && tool.tool.matches('target_selecting') &&
+        <OpenPoseBones uuid={props.uuid} targetVRM={vrm}></OpenPoseBones>)
       </group>
     )) || <></>
   );

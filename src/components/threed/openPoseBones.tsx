@@ -264,6 +264,7 @@ const OpenPoseBone = (props: {
 export const OpenPoseBones = (props: {
   uuid: string;
   targetVRM: VRM;
+  enable: boolean;
   noseMeshNumber?: number;
   LEarMeshNumber?: number;
   REarMeshNumber?: number;
