@@ -12,7 +12,7 @@ export const SimpleColorShader: Shader = {
       #include <begin_vertex>
       #include <skinning_vertex>
       #include <project_vertex>
-      gl_Position = projectionMatrix * modelViewMatrix  * skinned ;
+      gl_Position = projectionMatrix * modelViewMatrix  * vec4(transformed, 1.0); ;
     }
   `,
   fragmentShader: `
