@@ -1,6 +1,7 @@
 {
   "name": "three-opnepose-poser",
   "version": "0.1.0",
+  "type": "module",
   "private": true,
   "dependencies": {
     "@chakra-ui/core": "^0.8.0",
@@ -27,6 +28,7 @@
     "framer-motion": "^9.0.7",
     "keyframes": "^2.3.0",
     "meshline": "^3.1.6",
+    "postprocessing": "^6.32.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-redux": "^8.0.5",
@@ -87,6 +89,7 @@
     "lint-staged": "^13.1.2",
     "prettier": "^2.8.4",
     "vite": "^4.4.7",
+    "vite-plugin-glsl": "^1.1.2",
     "vite-plugin-svgr": "^3.2.0"
   }
 }

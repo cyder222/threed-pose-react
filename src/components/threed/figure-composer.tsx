@@ -15,7 +15,7 @@ import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
 import { MToonMaterial, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
-import { Group } from 'three';
+import { Group, Material, MeshBasicMaterial, MeshDepthMaterial } from 'three';
 import {
   deserializeEuler,
   deserializeVector3,
@@ -26,6 +26,12 @@ import figureComposerSlice from '../../store/threed/figure-composer/slice';
 import { BoneManupilators } from './boneManupilators';
 import camelcase from 'camelcase';
 import { OpenPoseBones } from './openPoseBones';
+import { depthMaterial } from './materials/depth-material/depth-material';
+import { isFlagSet } from '../../util/calculation';
+import { renderStateSelector } from '../../store/threed/camera/selector';
+import { ModelRenderStateEnum } from '../../store/threed/camera/slice';
+import { outlineMaterial } from './materials/outline-material/outline-material';
+import { simpleColorMaterial } from './materials/simple-color-material/simple-color-material';
 
 const FigureComposer = (
   props: { uuid: string } & {
@@ -38,6 +44,11 @@ const FigureComposer = (
   const composerState = useSelector((state: RootState) => {
     return FigureComposerListSelector.getById(state, props.uuid) || null;
   });
+
+  const modelRenderState = useSelector((state: RootState) => {
+    return renderStateSelector.getModelRenderState(state);
+  });
+
   const objectToolHandler = useObjectToolHandler();
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState(false);
@@ -148,82 +159,98 @@ const FigureComposer = (
       };
 
       const vrmPose = getBoneMap(loadedVrm);
-      console.log(vrmPose);
+
       dispatch(FigureComposerSlice.actions.setVRMPose({ id: props.uuid, pose: vrmPose }));
       // Materialのデータを保存
-      const setMaterialUserData = (obj: THREE.Mesh, material: unknown) => {
-        if (obj.userData.originalColor == null)
-          obj.userData.originalColor = new Array<THREE.Color>();
-        if (material instanceof MToonMaterial) {
-          // MToonMaterialの場合
-          obj.userData.originalColor[material.uuid] =
-            material.uniforms.emissive.value.clone();
-        } else {
-          // MeshStandardMaterialやMeshBasicMaterialの場合
-          const mat = material as THREE.MeshBasicMaterial;
-          obj.userData.originalColor[mat.uuid] = mat.color.clone();
-        }
-      };
+
       setLoading(false);
 
       // 色を変えるために、現在のMaterialデータをUserDataに保存
       loadedVrm.scene.traverse(obj => {
         if (obj instanceof THREE.Mesh) {
           obj.userData.isVrmModel = true;
+
           if (Array.isArray(obj.material)) {
-            obj.material.forEach((material: unknown) => {
-              setMaterialUserData(obj, material);
-            });
+            obj.userData.originalMaterial = obj.material.map(
+              (material: MToonMaterial | MeshBasicMaterial) => {
+                return material.clone();
+              },
+            );
+            obj.userData.selectedMaterial = obj.material.map(
+              (material: MToonMaterial | MeshBasicMaterial) => {
+                if (material instanceof MToonMaterial) {
+                  // MToonMaterialの場合
+                  const newMat = material.clone();
+                  newMat.uniforms.emissive.value.set(0x0000ff);
+                  return newMat;
+                } else {
+                  // MeshStandardMaterialやMeshBasicMaterialの場合
+                  const newMat = material.clone();
+                  newMat.color?.set?.(0x0000ff);
+                  return newMat;
+                }
+              },
+            );
           } else {
-            setMaterialUserData(obj, obj.material);
+            obj.userData.originalMaterial = obj.material.clone();
           }
         }
       });
     },
   );
 
-  const vrmBoundingBox = useMemo(() => {
-    return vrm ? new THREE.Box3Helper(new THREE.Box3().setFromObject(vrm.scene)) : null;
-  }, [vrm]);
-
   // hover時、select時に見た目を変更する
   useEffect(() => {
-    const setMaterial = (obj: THREE.Mesh, material: unknown, hover: boolean) => {
-      if (!obj.userData.isVrmModel) return;
+    const setMaterialColor = (material: unknown) => {
       if (material instanceof MToonMaterial) {
         // MToonMaterialの場合
-        if (composerState.composerSelectState === ComposerSelectState.selected) {
-          material.uniforms.emissive.value.set(0x0000ff);
-          return;
-        }
-        hover
-          ? material.uniforms.emissive.value.set(0x0000ff)
-          : (material.uniforms.emissive.value =
-              obj.userData.originalColor[material.uuid].clone());
+        material.uniforms.emissive.value.set(0x0000ff);
+        return;
       } else {
         // MeshStandardMaterialやMeshBasicMaterialの場合
-        const mat = material as THREE.MeshBasicMaterial;
-        if (composerState.composerSelectState === ComposerSelectState.selected) {
-          mat.color.set(0x0000ff);
-          return;
-        }
-        hover
-          ? mat.color.set(0x0000ff)
-          : (mat.color = obj.userData.originalColor[mat.uuid].clone());
+        const mat = material as any;
+        mat.color?.set?.(0x0000ff);
+        return;
       }
     };
-    vrm?.scene?.traverse(obj => {
-      if (obj instanceof THREE.Mesh) {
+    const setMaterial = (obj: THREE.Mesh, hover: boolean) => {
+      if (!obj.userData.isVrmModel) return;
+
+      let nextMat =
+        composerState.composerSelectState === ComposerSelectState.selected
+          ? obj.userData.selectedMaterial
+          : obj.userData.originalMaterial;
+      obj.material = nextMat;
+
+      let advancedMat: Material | null | Array<Material> = null;
+      if (isFlagSet(modelRenderState, ModelRenderStateEnum.renderDepth)) {
+        advancedMat = new MeshDepthMaterial();
+      }
+      if (isFlagSet(modelRenderState, ModelRenderStateEnum.renderOutline)) {
+        advancedMat = [simpleColorMaterial, outlineMaterial];
+      }
+
+      if (advancedMat != null) {
         if (Array.isArray(obj.material)) {
-          obj.material.forEach((material: unknown) => {
-            setMaterial(obj, material, hovered);
-          });
+          if (!Array.isArray(advancedMat)) {
+            obj.material = obj.material.map(material => {
+              return advancedMat! as Material;
+            });
+          } else {
+            obj.material = advancedMat;
+          }
         } else {
-          setMaterial(obj, obj.material, hovered);
+          obj.material = advancedMat!;
         }
       }
+    };
+
+    vrm?.scene?.traverse(obj => {
+      if (obj instanceof THREE.Mesh) {
+        setMaterial(obj, hovered);
+      }
     });
-  }, [hovered, composerState.composerSelectState]);
+  }, [composerState.composerSelectState, modelRenderState]);
 
   const getControlType = useMemo(() => {
     if (tool.tool.matches({ target_selected: 'move' })) {
@@ -268,7 +295,9 @@ const FigureComposer = (
               if (mouseUpOnTransform) intersects.length = 0;
             }}></TransformControls>
         )}
-        <group ref={meshRef} visible={!tool.tool.matches('target_selecting')}>
+        <group
+          ref={meshRef}
+          visible={isFlagSet(modelRenderState, ModelRenderStateEnum.renderVRM)}>
           <primitive
             object={vrm.scene}
             ref={vrmRef}
@@ -285,7 +314,12 @@ const FigureComposer = (
           uuid={props.uuid}
           targetVRM={vrm}
           enable={isRenderBoneManupilator}></BoneManupilators>
-        ) (vrm && <OpenPoseBones uuid={props.uuid} targetVRM={vrm}></OpenPoseBones>)
+        ) (vrm &&
+        <OpenPoseBones
+          enable={isFlagSet(modelRenderState, ModelRenderStateEnum.renderPoseBone)}
+          uuid={props.uuid}
+          targetVRM={vrm}></OpenPoseBones>
+        )
       </group>
     )) || <></>
   );

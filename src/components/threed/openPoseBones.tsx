@@ -264,6 +264,7 @@ const OpenPoseBone = (props: {
 export const OpenPoseBones = (props: {
   uuid: string;
   targetVRM: VRM;
+  enable: boolean;
   noseMeshNumber?: number;
   LEarMeshNumber?: number;
   REarMeshNumber?: number;
@@ -345,7 +346,7 @@ export const OpenPoseBones = (props: {
     setPosition(props.targetVRM.scene.position);
     console.log('use Effect');
   }, [...props.targetVRM.scene.position.toArray()]);
-  return (
+  return props.enable ? (
     <>
       <group position={position} rotation={props.targetVRM.scene.rotation}>
         {joinMap.map(boneInfo => {
@@ -360,5 +361,7 @@ export const OpenPoseBones = (props: {
         })}
       </group>
     </>
+  ) : (
+    <></>
   );
 };

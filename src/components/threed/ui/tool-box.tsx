@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import toolSlice from '../../../store/threed/tool/slice';
 import { toolSelector } from '../../../store/threed/tool/selectors';
 import { RootState } from '../../../store/create-store';
 import { useRef } from 'react';
-import { Canvas } from 'react-three-fiber';
+import { Canvas, useFrame, useThree } from 'react-three-fiber';
 import { Html, Billboard } from '@react-three/drei';
 import { toolService } from '../../../store/threed/tool/machine/object-tool-machine';
 import { Box3, Group, Vector3 } from 'three';
@@ -176,6 +176,7 @@ const TranslationToolbox = (props: { position: Vector3; targetUUID: string }) =>
 
 const ObjectToolBox = (props: { targetUUID: string; target?: Group }) => {
   const dispatch = useDispatch();
+  const { camera, size } = useThree();
   const toolState = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });
@@ -217,18 +218,16 @@ const ObjectToolBox = (props: { targetUUID: string; target?: Group }) => {
   ]);
 
   const ref = useRef(null);
-
+  const [pos, setPos] = useState(new Vector3(0, 1, 0));
   return (
     <>
       {getToolboxType === 'objectControlTool' && (
         <TranslationToolbox
           targetUUID={props.targetUUID}
-          position={new Vector3(0, 1, 0)}></TranslationToolbox>
+          position={pos}></TranslationToolbox>
       )}
       {getToolboxType === 'poseControlMode' && (
-        <PoseToolBox
-          targetUUID={props.targetUUID}
-          position={new Vector3(0, 1, 0)}></PoseToolBox>
+        <PoseToolBox targetUUID={props.targetUUID} position={pos}></PoseToolBox>
       )}
     </>
   );

@@ -10,10 +10,14 @@ import {
   toolService,
 } from './threed/tool/machine/object-tool-machine';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import { sideMenuSlice } from './ui/left-side-menu/slice';
+import { RenderStateSlice } from './threed/camera/slice';
 
 export const rootReducer = combineReducers({
   figureComposers: figureComposerSlice.reducer,
   currentTool: toolStateSlice.reducer,
+  sideMenu: sideMenuSlice.reducer,
+  renderState: RenderStateSlice.reducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -34,12 +38,12 @@ export const store = configureStore({
     const middleware = getDefaultMiddleWare({
       serializableCheck: false,
     });
-    if (process.env.DEV_MODE !== 'production') {
+    if (import.meta.env.MODE !== 'production') {
       middleware.push(logger);
     }
     return middleware;
   },
-  devTools: process.env.DEV_MODE !== 'production',
+  devTools: import.meta.env.MODE !== 'production',
 });
 
 toolMachineInitlizer(toolService, store);
