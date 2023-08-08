@@ -1,5 +1,11 @@
 import React, { createContext, useEffect, useMemo, useRef, useState } from 'react';
-import { OrbitControls, TransformControls } from '@react-three/drei';
+import {
+  OrbitControls,
+  Html,
+  TransformControls,
+  CameraControls,
+} from '@react-three/drei';
+import { Box } from '@chakra-ui/react';
 import { FigureComposerListSelector } from '../../store/threed/figure-composer/selectors';
 import figureComposerSlice from '../../store/threed/figure-composer/slice';
 import { RootState } from '../../store/create-store';
@@ -9,14 +15,18 @@ import FigureComposer from './figure-composer';
 import * as THREE from 'three';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import { EmptyObject } from './empty-object';
+import SimpleCameraControll from './control/simple-camera-controll';
 
 import Toolbox from './ui/tool-box';
 import useSceneEditTool from '../../hooks/tools/use-scene-edit-tool';
 import { VRM } from '@pixiv/three-vrm';
 import { Group } from 'three';
 import { SdSideMenu } from '../ui/sidebar/sd-generate';
-import { useThree } from 'react-three-fiber';
+import { useFrame, useThree } from 'react-three-fiber';
 import { ThreeContext } from '../../context/three-context';
+import { VStack } from '@chakra-ui/react';
+import { LeftToolBar } from '../ui/screen-tool/left-toolbar';
+import { useSidemenuComponent } from '../../hooks/ui/use-sidemenu';
 
 interface VrmRefs {
   [key: string]: React.RefObject<VRM>;
@@ -24,6 +34,13 @@ interface VrmRefs {
 
 const Scene = () => {
   const dispatch = useDispatch();
+  const bodyRef = useRef<HTMLDivElement>(null);
+  const orbit = useRef<any>();
+  useEffect(() => {
+    if (!orbit.current) return;
+    orbit.current.tick = orbit.current.update();
+  }, [orbit.current]);
+
   const figureComposers = useSelector((state: RootState) => {
     return FigureComposerListSelector.getAll(state);
   });
@@ -48,7 +65,7 @@ const Scene = () => {
   const [orbitEnable, setOrbitEnable] = useState(true);
   const canvas = useRef(null);
   const [camera, setCamera] = useState(
-    new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.5, 20),
+    new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.3, 20),
   );
   const [glRender, setGlRender] = useState<THREE.WebGLRenderer | null>(null);
   const [glScene, setGlScene] = useState<THREE.Scene | null>(null);
@@ -76,55 +93,59 @@ const Scene = () => {
     }
   }, [tool.tool.context.isProcessing]);
 
+  const sideMenu = useSidemenuComponent();
+
   return (
     <main
       style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'row' }}>
-      <div style={{ width: '30%', borderRight: '1px solid' }}>
+      <div style={{ width: '250px', borderRight: '1px solid' }}>
         <ThreeContext.Provider value={{ gl: glRender, scene: glScene, camera: glCamera }}>
-          <SdSideMenu></SdSideMenu>
+          {sideMenu({})}
         </ThreeContext.Provider>
       </div>
-
-      <Canvas
-        ref={canvas}
-        camera={camera}
-        gl={{ logarithmicDepthBuffer: true }}
-        onCreated={state => {
-          // 生成時に、外に渡す用のgl, camera, sceneをセットする
-          setGlRender(state.gl);
-          setGlCamera(state.camera);
-          setGlScene(state.scene);
-        }}>
-        <OrbitControls
-          enablePan={true}
-          minDistance={1}
-          maxDistance={1000}
-          enabled={orbitEnable}
-          camera={camera}></OrbitControls>
-        <ambientLight />
-        <EmptyObject
-          onClick={e => {
-            return sceneEditTool?.emptyHandlers?.onMouseDown?.(e);
-          }}
-          onPointerUp={e => {
-            return sceneEditTool?.emptyHandlers?.onMouseUp?.(e);
-          }}></EmptyObject>
-        <pointLight position={[20, 10, 10]} />
-        {Object.keys(figureComposers).map(key => {
-          vrmRefs.current[key] = React.createRef<VRM>();
-          return (
-            <group>
-              <Toolbox
-                target={vrmRefs.current[key].current?.scene}
-                targetUUID={key}></Toolbox>
-              <FigureComposer
-                vrmRef={vrmRefs.current[key]}
-                key={key}
-                uuid={key}></FigureComposer>
-            </group>
-          );
-        })}
-      </Canvas>
+      <div className='screen' style={{ position: 'relative', width: '100%' }}>
+        <LeftToolBar></LeftToolBar>
+        <Canvas
+          ref={canvas}
+          camera={camera}
+          onCreated={state => {
+            // 生成時に、外に渡す用のgl, camera, sceneをセットする
+            setGlRender(state.gl);
+            setGlCamera(state.camera);
+            setGlScene(state.scene);
+          }}>
+          <CameraControls
+            enabled={orbitEnable}
+            camera={camera}
+            smoothTime={0}
+            draggingSmoothTime={0}
+            dampingFactor={0}
+            draggingDampingFactor={0}></CameraControls>
+          <ambientLight />
+          <EmptyObject
+            onClick={e => {
+              return sceneEditTool?.emptyHandlers?.onMouseDown?.(e);
+            }}
+            onPointerUp={e => {
+              return sceneEditTool?.emptyHandlers?.onMouseUp?.(e);
+            }}></EmptyObject>
+          <pointLight position={[20, 10, 10]} />
+          {Object.keys(figureComposers).map(key => {
+            vrmRefs.current[key] = React.createRef<VRM>();
+            return (
+              <group>
+                <Toolbox
+                  target={vrmRefs.current[key].current?.scene}
+                  targetUUID={key}></Toolbox>
+                <FigureComposer
+                  vrmRef={vrmRefs.current[key]}
+                  key={key}
+                  uuid={key}></FigureComposer>
+              </group>
+            );
+          })}
+        </Canvas>
+      </div>
     </main>
   );
 };

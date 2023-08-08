@@ -10,10 +10,14 @@ import {
   toolService,
 } from './threed/tool/machine/object-tool-machine';
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import { sideMenuSlice } from './ui/left-side-menu/slice';
+import { RenderStateSlice } from './threed/camera/slice';
 
 export const rootReducer = combineReducers({
   figureComposers: figureComposerSlice.reducer,
   currentTool: toolStateSlice.reducer,
+  sideMenu: sideMenuSlice.reducer,
+  renderState: RenderStateSlice.reducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

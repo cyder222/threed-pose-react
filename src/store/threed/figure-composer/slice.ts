@@ -27,8 +27,8 @@ export type VRMEntity = {
 export enum composerRenderState {
   renderVRM = 1,
   renderPoseBone = 1 << 1,
-  renderControlCube = 1 << 2,
-  renderAdditionalFacePoint = 1 << 3,
+  renderDepth = 1 << 2,
+  renderOutline = 1 << 3,
 }
 
 export enum ComposerSelectState {
@@ -86,11 +86,7 @@ const figureComposerSlice = createSlice({
           vrmBoneSelectState: {},
         },
         uuid: uuid,
-        renderState:
-          composerRenderState.renderVRM &
-          composerRenderState.renderPoseBone &
-          composerRenderState.renderControlCube &
-          composerRenderState.renderAdditionalFacePoint,
+        renderState: composerRenderState.renderVRM,
         composerSelectState: ComposerSelectState.none,
         additionInfomationOpenPoseFace: {
           Lear: serializeVector3(new THREE.Vector3(875, 875, 875)),

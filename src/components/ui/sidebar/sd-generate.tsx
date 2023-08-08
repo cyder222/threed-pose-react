@@ -5,6 +5,7 @@ import StableDiffusionApi, {
 import * as offscreenUtil from '../../../external/sd-api-frontend/src/utils/offscreen-canvas-util';
 import { ThreeContext } from '../../../context/three-context';
 import { Color } from 'three';
+import { Box, Button, FormControl, Textarea, FormLabel, Image } from '@chakra-ui/react';
 
 export const SdSideMenu = () => {
   const { gl, camera, scene } = useContext(ThreeContext);
@@ -46,7 +47,7 @@ export const SdSideMenu = () => {
       const controlNetUnit = screenshot
         ? [
             new ControlNetUnit({
-              model: 'control_v11p_sd15_openpose [cab727d4]',
+              model: 'control_v11f1p_sd15_depth [cfd03158]', //'control_v11p_sd15_canny [d14c016b]',
               module: 'none',
               input_image: await offscreenUtil.offscreenCanvasFromBase64(
                 screenshot,
@@ -76,28 +77,23 @@ export const SdSideMenu = () => {
     [gl, scene, camera],
   );
   return (
-    <form action='#' onSubmit={handleSubmit}>
-      <p>ポジティブプロンプト</p>
-      <textarea
-        name='prompt'
-        rows={5}
-        style={{
-          width: '100%',
-          border: '1px solid',
-          borderRadius: '5px',
-        }}></textarea>
-      <p>ネガティブプロンプト</p>
-      <textarea
-        name='negativePrompt'
-        rows={5}
-        style={{
-          width: '100%',
-          border: '1px solid',
-          borderRadius: '5px',
-        }}></textarea>
-      <input type='submit' value='生成'></input>
-      <img src={b64img} style={{ width: '100%' }}></img>
-      <img src={b64img2} style={{ width: '100%' }}></img>
+    <form onSubmit={handleSubmit}>
+      <FormControl id='prompt' my={4}>
+        <FormLabel>ポジティブプロンプト</FormLabel>
+        <Textarea name='prompt' rows={5} />
+      </FormControl>
+
+      <FormControl id='negativePrompt' my={4}>
+        <FormLabel>ネガティブプロンプト</FormLabel>
+        <Textarea name='negativePrompt' rows={5} />
+      </FormControl>
+
+      <Button type='submit' colorScheme='teal' mt={4}>
+        生成
+      </Button>
+
+      <Image src={b64img} width='100%' mt={4} />
+      <Image src={b64img2} width='100%' mt={4} />
     </form>
   );
 };
