@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { useThree } from '@react-three/fiber';
 import * as THREE from 'three';
+import React from 'react';
 
 // 何もないところをクリックした時の処理を追加するために使うコンポーネント
 export const EmptyObject = (props: {

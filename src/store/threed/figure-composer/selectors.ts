@@ -18,4 +18,14 @@ export const FigureComposerListSelector = {
       }),
     );
   },
+  getTransformArray: (state: RootState, uuid: string): number[] => {
+    return state.figureComposers[uuid].vrmState.matrix4;
+  },
+  getBoneTransformArray: (
+    state: RootState,
+    uuid: string,
+    boneName: string,
+  ): number[] | undefined => {
+    return state.figureComposers[uuid].vrmState.vrmPose[boneName]?.matrix4;
+  },
 };

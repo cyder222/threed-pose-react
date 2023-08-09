@@ -180,9 +180,7 @@ export const BoneManupilators = (props: {
       if (!bone) return;
       const poseState: VRMPoseState = {
         humanBoneName: {
-          position: serializeVector3(bone.position),
-          rotation: serializeEuler(bone.rotation),
-          scale: serializeVector3(bone.scale),
+          matrix4: bone.matrix.toArray(),
         },
       };
       dispatch(

@@ -204,18 +204,7 @@ const ObjectToolBox = (props: { targetUUID: string; target?: Group }) => {
     const boundingBox = new Box3().setFromObject(props.target);
 
     //表示位置を調整する
-  }, [
-    composerState.vrmState.rotation.x,
-    composerState.vrmState.rotation.y,
-    composerState.vrmState.rotation.z,
-    composerState.vrmState.translate.x,
-    composerState.vrmState.translate.y,
-    composerState.vrmState.translate.z,
-    composerState.vrmState.scale.x,
-    composerState.vrmState.scale.y,
-    composerState.vrmState.scale.z,
-    props.target,
-  ]);
+  }, [...composerState.vrmState.matrix4, props.target]);
 
   const ref = useRef(null);
   const [pos, setPos] = useState(new Vector3(0, 1, 0));

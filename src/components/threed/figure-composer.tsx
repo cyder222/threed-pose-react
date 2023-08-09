@@ -60,75 +60,6 @@ const FigureComposer = (
     return toolSelector.getCurrent(state);
   });
 
-  // store側の位置情報が更新された時に、表示側も移動させる
-  useEffect(() => {
-    if (!meshRef?.current) {
-      return;
-    }
-    const newPosition = deserializeVector3(composerState.vrmState.translate);
-    const newScale = deserializeVector3(composerState.vrmState.scale);
-    const newRotation = deserializeEuler(composerState.vrmState.rotation);
-
-    meshRef.current.position.equals(newPosition) &&
-      meshRef.current.position.copy(newPosition);
-
-    meshRef.current.scale.equals(newScale) && meshRef.current.scale.copy(newScale);
-
-    meshRef.current.rotation.equals(newRotation) &&
-      meshRef.current.rotation.copy(newRotation);
-  }, [
-    composerState.vrmState.translate,
-    composerState.vrmState.rotation,
-    composerState.vrmState.scale,
-  ]);
-
-  // vrmの場所をthreejsの機能で移動した時に、storeもあわせる
-  useEffect(() => {
-    if (!meshRef?.current) {
-      return;
-    }
-    const newPosition = meshRef?.current?.position;
-    const newScale = meshRef?.current?.scale;
-    const newRotation = meshRef?.current?.rotation;
-    const oldPosition = deserializeVector3(composerState.vrmState.translate);
-    const oldScale = deserializeVector3(composerState.vrmState.scale);
-    const oldRotation = deserializeEuler(composerState.vrmState.rotation);
-    if (!newPosition.equals(oldPosition)) {
-      dispatch(
-        figureComposerSlice.actions.translateComposer({
-          id: props.uuid,
-          translateTo: newPosition.clone(),
-        }),
-      );
-    }
-    if (!newScale.equals(oldScale)) {
-      dispatch(
-        figureComposerSlice.actions.scaleComposer({
-          id: props.uuid,
-          scaleTo: newScale.clone(),
-        }),
-      );
-    }
-    if (!newRotation.equals(oldRotation)) {
-      dispatch(
-        figureComposerSlice.actions.rotateComposer({
-          id: props.uuid,
-          rotateTo: newRotation.clone(),
-        }),
-      );
-    }
-  }, [
-    meshRef?.current?.position.x,
-    meshRef?.current?.position.y,
-    meshRef?.current?.position.z,
-    meshRef?.current?.scale.x,
-    meshRef?.current?.scale.y,
-    meshRef?.current?.scale.z,
-    meshRef?.current?.rotation.x,
-    meshRef?.current?.rotation.y,
-    meshRef?.current?.rotation.z,
-  ]);
-
   const vrm = useVRM(
     url,
     e => {
@@ -148,9 +79,7 @@ const FigureComposer = (
             continue;
           }
           const pose: VRMPoseNodeState = {
-            position: serializeVector3(boneNode.position),
-            scale: serializeVector3(boneNode.scale),
-            rotation: serializeEuler(boneNode.rotation),
+            matrix4: boneNode.matrix.toArray(),
           };
           boneState[name] = pose;
         }
