@@ -3,6 +3,7 @@ import { Store, combineReducers } from 'redux';
 import logger from 'redux-logger';
 import figureComposerSlice, {
   initialState as initalFigureComposersState,
+  undoableFigureComposerReducer,
 } from './threed/figure-composer/slice';
 import toolStateSlice from './threed/tool/slice';
 import {
@@ -14,7 +15,7 @@ import { sideMenuSlice } from './ui/left-side-menu/slice';
 import { RenderStateSlice } from './threed/camera/slice';
 
 export const rootReducer = combineReducers({
-  figureComposers: figureComposerSlice.reducer,
+  figureComposers: undoableFigureComposerReducer,
   currentTool: toolStateSlice.reducer,
   sideMenu: sideMenuSlice.reducer,
   renderState: RenderStateSlice.reducer,

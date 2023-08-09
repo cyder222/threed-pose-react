@@ -11,6 +11,7 @@ import {
 } from '../../../util/store/three-seiralize';
 import { Matrix4 } from 'three';
 import { composeTransform, extractTransform } from '../../../util/calculation';
+import undoable, { includeAction } from 'redux-undo';
 
 export type VRMPoseNodeState = {
   matrix4: number[];
@@ -187,7 +188,17 @@ const figureComposerSlice = createSlice({
         });
       });
     },
-    updateBoneMatrix: (
+    updateTransformMatrix: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        matrix: Matrix4;
+      }>,
+    ) => {
+      const { id, matrix } = action.payload;
+      state[id].vrmState.matrix4 = matrix.toArray();
+    },
+    updateBoneTransformMatrix: (
       state,
       action: PayloadAction<{
         id: string;
@@ -206,6 +217,10 @@ const figureComposerSlice = createSlice({
       state[id].renderState = displayState;
     },
   },
+});
+
+export const undoableFigureComposerReducer = undoable(figureComposerSlice.reducer, {
+  filter: includeAction([figureComposerSlice.actions.updateTransformMatrix.type]),
 });
 
 export default figureComposerSlice;

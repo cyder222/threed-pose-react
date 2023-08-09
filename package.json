@@ -34,6 +34,7 @@
     "react-redux": "^8.0.5",
     "react-three-fiber": "^6.0.13",
     "redux-logger": "^3.0.6",
+    "redux-undo": "^1.1.0",
     "stable-diffusion-api": "^0.0.7",
     "string-similarity": "^4.0.4",
     "three": "^0.150.0",

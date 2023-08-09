@@ -15,7 +15,7 @@ import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
 import { MToonMaterial, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
-import { Group, Material, MeshBasicMaterial, MeshDepthMaterial } from 'three';
+import { Group, Material, Matrix4, MeshBasicMaterial, MeshDepthMaterial } from 'three';
 import {
   deserializeEuler,
   deserializeVector3,
@@ -27,7 +27,7 @@ import { BoneManupilators } from './boneManupilators';
 import camelcase from 'camelcase';
 import { OpenPoseBones } from './openPoseBones';
 import { depthMaterial } from './materials/depth-material/depth-material';
-import { isFlagSet } from '../../util/calculation';
+import { extractTransform, isFlagSet } from '../../util/calculation';
 import { renderStateSelector } from '../../store/threed/camera/selector';
 import { ModelRenderStateEnum } from '../../store/threed/camera/slice';
 import { outlineMaterial } from './materials/outline-material/outline-material';
@@ -52,9 +52,24 @@ const FigureComposer = (
   const objectToolHandler = useObjectToolHandler();
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState(false);
+  const [vrmTransformMatrix, setVrmTransformMatrix] = useState(new Matrix4());
   const vrmRef = useRef<VRM>(null);
   const meshRef = useRef<Group>(null);
   const dispatch = useDispatch();
+  const vrmTransformMatrixArray = useSelector((state: RootState) => {
+    return (
+      FigureComposerListSelector.getTransformArray(state, props.uuid) ||
+      new Matrix4().identity().toArray()
+    );
+  });
+
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const { position, scale, rotation } = extractTransform(vrmTransformMatrixArray);
+    meshRef.current.position.copy(position);
+    meshRef.current.rotation.copy(rotation);
+    meshRef.current.scale.copy(scale);
+  }, [vrmTransformMatrixArray, meshRef.current]);
 
   const tool = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);

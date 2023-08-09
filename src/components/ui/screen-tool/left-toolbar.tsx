@@ -1,10 +1,12 @@
 import { Box, Button, VStack, Tooltip } from '@chakra-ui/react';
+import React from 'react';
 import { useDispatch } from 'react-redux';
 import { ReactComponent as AddIcon } from '../../../icons/add_human.svg';
 import { ReactComponent as AnimationModeIcon } from '../../../icons/animation_body.svg';
 import { ReactComponent as CameraSetting } from '../../../icons/camera_setting.svg';
 import { ReactComponent as MakeIcon } from '../../../icons/toaster.svg';
 import { sideMenuSlice } from '../../../store/ui/left-side-menu/slice';
+import { ActionCreators } from 'redux-undo';
 
 const DefaultSceneToolBox = () => {
   const dispatch = useDispatch();
@@ -52,6 +54,7 @@ const DefaultSceneToolBox = () => {
                 displayType: 'generationPanel',
               }),
             );
+            dispatch(ActionCreators.redo());
           }}>
           <MakeIcon width={24} height={24} />
         </Box>
@@ -62,7 +65,10 @@ const DefaultSceneToolBox = () => {
           p={0}
           height={'32px'}
           bg={'transparent'}
-          _hover={{ transform: 'scale(1.33)', bg: 'transparent' }}>
+          _hover={{ transform: 'scale(1.33)', bg: 'transparent' }}
+          onClick={() => {
+            dispatch(ActionCreators.undo());
+          }}>
           <AnimationModeIcon width={24} height={24} />
         </Box>
       </Tooltip>
