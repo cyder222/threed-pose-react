@@ -107,6 +107,7 @@ const BoneManupilator = (props: {
             objectToolHandler.sceneEditToolBoneControlHandlers?.onMouseDown?.(
               props.uuid,
               props.targetBoneName,
+              event,
             );
             setLocalSelectState(LocalSelectState.selected);
           }}
@@ -115,6 +116,7 @@ const BoneManupilator = (props: {
             objectToolHandler.sceneEditToolBoneControlHandlers?.onMouseUp?.(
               props.uuid,
               props.targetBoneName,
+              event,
             );
             setLocalSelectState(LocalSelectState.none);
           }}
@@ -131,12 +133,14 @@ const BoneManupilator = (props: {
             objectToolHandler.sceneEditToolBoneControlHandlers?.onMouseDown?.(
               props.uuid,
               props.targetBoneName,
+              event,
             );
           }}
           onPointerUp={(event: ThreeEvent<PointerEvent> | undefined) => {
             objectToolHandler.sceneEditToolBoneControlHandlers?.onMouseUp?.(
               props.uuid,
               props.targetBoneName,
+              event,
             );
           }}
           onPointerOver={(event: THREE.Event | undefined) => {
@@ -170,45 +174,6 @@ export const BoneManupilators = (props: {
   });
   const humanoid = props.targetVRM.humanoid;
   const dispatch = useDispatch();
-
-  for (const boneName in VRMHumanBoneName) {
-    const humanBoneName = camelcase(boneName) as VRMHumanBoneName;
-    const matrixOfBone = humanoid.getNormalizedBoneNode(humanBoneName)?.matrix?.toArray();
-    // threejs側のbone位置が変更された時に、store側にも反映させる
-    useEffect(() => {
-      const bone = humanoid.getNormalizedBoneNode(humanBoneName);
-      if (!bone) return;
-      const poseState: VRMPoseState = {
-        humanBoneName: {
-          matrix4: bone.matrix.toArray(),
-        },
-      };
-      dispatch(
-        FigureComposerSlice.actions.setVRMPose({ id: props.uuid, pose: poseState }),
-      );
-    }, [...(matrixOfBone != null ? matrixOfBone : [])]);
-
-    /* store側のbone情報が更新された時に、threejs側も移動させる
-    useEffect(() => {
-      const position = composerState.vrmState.vrmPose[humanBoneName].position;
-      const rotation = composerState.vrmState.vrmPose[humanBoneName].rotation;
-      const scale = composerState.vrmState.vrmPose[humanBoneName].scale;
-
-      humanoid
-        .getNormalizedBoneNode(humanBoneName)
-        ?.position.set(position.x, position.y, position.z);
-      humanoid
-        .getNormalizedBoneNode(humanBoneName)
-        ?.rotation.set(rotation.x, rotation.y, rotation.z, rotation.order);
-      humanoid.getNormalizedBoneNode(humanBoneName)?.scale.set(scale.x, scale.y, scale.z);
-    }, [
-      Object.hasOwn(composerState.vrmState.vrmPose, humanBoneName),
-      ...Object.values(composerState.vrmState.vrmPose[humanBoneName].position),
-      ...Object.values(composerState.vrmState.vrmPose[humanBoneName].rotation),
-      ...Object.values(composerState.vrmState.vrmPose[humanBoneName].scale),
-    ]);
-    */
-  }
 
   return (
     <>

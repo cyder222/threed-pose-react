@@ -19,8 +19,7 @@ export const createObjectMoveToolHandler = (
       },
       onMouseUp(uuid, event, _raycaster) {
         toolService.send('END_TOOL_OPERATION');
-        if (event) {
-          console.log(event.target.object.matrix);
+        if (event?.target?.object) {
           dispatch(
             figureComposerSlice.actions.updateTransformMatrix({
               id: uuid,

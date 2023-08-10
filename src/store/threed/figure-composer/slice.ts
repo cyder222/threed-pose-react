@@ -78,7 +78,7 @@ const figureComposerSlice = createSlice({
       const composerState = {
         vrmFilename: filename,
         vrmState: {
-          matrix4: new Matrix4().toArray(),
+          matrix4: new Matrix4().identity().toArray(),
           vrmPose: {},
           vrmBoneSelectState: {},
         },
@@ -220,7 +220,11 @@ const figureComposerSlice = createSlice({
 });
 
 export const undoableFigureComposerReducer = undoable(figureComposerSlice.reducer, {
-  filter: includeAction([figureComposerSlice.actions.updateTransformMatrix.type]),
+  filter: includeAction([
+    figureComposerSlice.actions.updateTransformMatrix.type,
+    figureComposerSlice.actions.setVRMPose.type,
+    figureComposerSlice.actions.updateBoneTransformMatrix.type,
+  ]),
 });
 
 export default figureComposerSlice;

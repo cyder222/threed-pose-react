@@ -52,7 +52,6 @@ const FigureComposer = (
   const objectToolHandler = useObjectToolHandler();
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState(false);
-  const [vrmTransformMatrix, setVrmTransformMatrix] = useState(new Matrix4());
   const vrmRef = useRef<VRM>(null);
   const meshRef = useRef<Group>(null);
   const dispatch = useDispatch();
@@ -63,6 +62,7 @@ const FigureComposer = (
     );
   });
 
+  // 並行位置を、reduxに合わせる
   useEffect(() => {
     if (!meshRef.current) return;
     const { position, scale, rotation } = extractTransform(vrmTransformMatrixArray);
@@ -70,6 +70,27 @@ const FigureComposer = (
     meshRef.current.rotation.copy(rotation);
     meshRef.current.scale.copy(scale);
   }, [vrmTransformMatrixArray, meshRef.current]);
+
+  //ポーズ情報をreduxに合わせる
+  const boneNames = Object.keys(VRMHumanBoneName);
+
+  // bones を格納するための変数
+  const bones: { [key: string]: number[] | undefined } = {};
+
+  boneNames.forEach(boneName => {
+    const name = camelcase(boneName) as VRMHumanBoneName;
+    const boneTransform = useSelector((state: RootState) =>
+      FigureComposerListSelector.getBoneTransformArray(state, props.uuid, name),
+    );
+    useEffect(() => {
+      if (!vrm || !boneTransform) return;
+      const { position, scale, rotation } = extractTransform(boneTransform);
+      vrm.humanoid.getNormalizedBoneNode(name)?.rotation.copy(rotation);
+      vrm.humanoid.getNormalizedBoneNode(name)?.position.copy(position);
+      vrm.humanoid.getNormalizedBoneNode(name)?.scale.copy(scale);
+      vrm.humanoid.update();
+    }, [boneTransform]);
+  });
 
   const tool = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
