@@ -6,6 +6,7 @@ import * as offscreenUtil from '../../../external/sd-api-frontend/src/utils/offs
 import { ThreeContext } from '../../../context/three-context';
 import { Color } from 'three';
 import { Box, Button, FormControl, Textarea, FormLabel, Image } from '@chakra-ui/react';
+import React from 'react';
 
 export const SdSideMenu = () => {
   const { gl, camera, scene } = useContext(ThreeContext);

@@ -15,7 +15,7 @@ import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
 import { MToonMaterial, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
-import { Group, Material, MeshBasicMaterial, MeshDepthMaterial } from 'three';
+import { Group, Material, Matrix4, MeshBasicMaterial, MeshDepthMaterial } from 'three';
 import {
   deserializeEuler,
   deserializeVector3,
@@ -27,7 +27,7 @@ import { BoneManupilators } from './boneManupilators';
 import camelcase from 'camelcase';
 import { OpenPoseBones } from './openPoseBones';
 import { depthMaterial } from './materials/depth-material/depth-material';
-import { isFlagSet } from '../../util/calculation';
+import { extractTransform, isFlagSet } from '../../util/calculation';
 import { renderStateSelector } from '../../store/threed/camera/selector';
 import { ModelRenderStateEnum } from '../../store/threed/camera/slice';
 import { outlineMaterial } from './materials/outline-material/outline-material';
@@ -55,79 +55,46 @@ const FigureComposer = (
   const vrmRef = useRef<VRM>(null);
   const meshRef = useRef<Group>(null);
   const dispatch = useDispatch();
+  const vrmTransformMatrixArray = useSelector((state: RootState) => {
+    return (
+      FigureComposerListSelector.getTransformArray(state, props.uuid) ||
+      new Matrix4().identity().toArray()
+    );
+  });
+
+  // 並行位置を、reduxに合わせる
+  useEffect(() => {
+    if (!meshRef.current) return;
+    const { position, scale, rotation } = extractTransform(vrmTransformMatrixArray);
+    meshRef.current.position.copy(position);
+    meshRef.current.rotation.copy(rotation);
+    meshRef.current.scale.copy(scale);
+  }, [vrmTransformMatrixArray, meshRef.current]);
+
+  //ポーズ情報をreduxに合わせる
+  const boneNames = Object.keys(VRMHumanBoneName);
+
+  // bones を格納するための変数
+  const bones: { [key: string]: number[] | undefined } = {};
+
+  boneNames.forEach(boneName => {
+    const name = camelcase(boneName) as VRMHumanBoneName;
+    const boneTransform = useSelector((state: RootState) =>
+      FigureComposerListSelector.getBoneTransformArray(state, props.uuid, name),
+    );
+    useEffect(() => {
+      if (!vrm || !boneTransform) return;
+      const { position, scale, rotation } = extractTransform(boneTransform);
+      vrm.humanoid.getNormalizedBoneNode(name)?.rotation.copy(rotation);
+      vrm.humanoid.getNormalizedBoneNode(name)?.position.copy(position);
+      vrm.humanoid.getNormalizedBoneNode(name)?.scale.copy(scale);
+      vrm.humanoid.update();
+    }, [boneTransform]);
+  });
 
   const tool = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });
-
-  // store側の位置情報が更新された時に、表示側も移動させる
-  useEffect(() => {
-    if (!meshRef?.current) {
-      return;
-    }
-    const newPosition = deserializeVector3(composerState.vrmState.translate);
-    const newScale = deserializeVector3(composerState.vrmState.scale);
-    const newRotation = deserializeEuler(composerState.vrmState.rotation);
-
-    meshRef.current.position.equals(newPosition) &&
-      meshRef.current.position.copy(newPosition);
-
-    meshRef.current.scale.equals(newScale) && meshRef.current.scale.copy(newScale);
-
-    meshRef.current.rotation.equals(newRotation) &&
-      meshRef.current.rotation.copy(newRotation);
-  }, [
-    composerState.vrmState.translate,
-    composerState.vrmState.rotation,
-    composerState.vrmState.scale,
-  ]);
-
-  // vrmの場所をthreejsの機能で移動した時に、storeもあわせる
-  useEffect(() => {
-    if (!meshRef?.current) {
-      return;
-    }
-    const newPosition = meshRef?.current?.position;
-    const newScale = meshRef?.current?.scale;
-    const newRotation = meshRef?.current?.rotation;
-    const oldPosition = deserializeVector3(composerState.vrmState.translate);
-    const oldScale = deserializeVector3(composerState.vrmState.scale);
-    const oldRotation = deserializeEuler(composerState.vrmState.rotation);
-    if (!newPosition.equals(oldPosition)) {
-      dispatch(
-        figureComposerSlice.actions.translateComposer({
-          id: props.uuid,
-          translateTo: newPosition.clone(),
-        }),
-      );
-    }
-    if (!newScale.equals(oldScale)) {
-      dispatch(
-        figureComposerSlice.actions.scaleComposer({
-          id: props.uuid,
-          scaleTo: newScale.clone(),
-        }),
-      );
-    }
-    if (!newRotation.equals(oldRotation)) {
-      dispatch(
-        figureComposerSlice.actions.rotateComposer({
-          id: props.uuid,
-          rotateTo: newRotation.clone(),
-        }),
-      );
-    }
-  }, [
-    meshRef?.current?.position.x,
-    meshRef?.current?.position.y,
-    meshRef?.current?.position.z,
-    meshRef?.current?.scale.x,
-    meshRef?.current?.scale.y,
-    meshRef?.current?.scale.z,
-    meshRef?.current?.rotation.x,
-    meshRef?.current?.rotation.y,
-    meshRef?.current?.rotation.z,
-  ]);
 
   const vrm = useVRM(
     url,
@@ -148,9 +115,7 @@ const FigureComposer = (
             continue;
           }
           const pose: VRMPoseNodeState = {
-            position: serializeVector3(boneNode.position),
-            scale: serializeVector3(boneNode.scale),
-            rotation: serializeEuler(boneNode.rotation),
+            matrix4: boneNode.matrix.toArray(),
           };
           boneState[name] = pose;
         }

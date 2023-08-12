@@ -55,7 +55,7 @@ const PoseToolBox = (props: { position: Vector3; targetUUID: string }) => {
               onPointerDown={e => {
                 e.stopPropagation();
               }}>
-              <PoseIcon width={32} height={32} />
+              <PoseIcon width={32} height={32}></PoseIcon>
             </button>
           </Stack>
           <Stack w={32} h={32} alignItems={'center'} justifyContent={'center'}>
@@ -196,26 +196,6 @@ const ObjectToolBox = (props: { targetUUID: string; target?: Group }) => {
       return '';
     }
   }, [tool.tool]);
-
-  // オブジェクトの位置とサイズに合わせて表示位置を調整する
-  useEffect(() => {
-    // vrmのboudingBoxを取得する
-    if (!props.target) return;
-    const boundingBox = new Box3().setFromObject(props.target);
-
-    //表示位置を調整する
-  }, [
-    composerState.vrmState.rotation.x,
-    composerState.vrmState.rotation.y,
-    composerState.vrmState.rotation.z,
-    composerState.vrmState.translate.x,
-    composerState.vrmState.translate.y,
-    composerState.vrmState.translate.z,
-    composerState.vrmState.scale.x,
-    composerState.vrmState.scale.y,
-    composerState.vrmState.scale.z,
-    props.target,
-  ]);
 
   const ref = useRef(null);
   const [pos, setPos] = useState(new Vector3(0, 1, 0));

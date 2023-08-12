@@ -22,6 +22,7 @@ import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import camelcase from 'camelcase';
 import { ThreeEvent } from 'react-three-fiber';
+import React from 'react';
 
 const BoneManupilator = (props: {
   uuid: string;
@@ -43,6 +44,15 @@ const BoneManupilator = (props: {
       BoneSelectState.selected
     );
   }, [composerState.vrmState.vrmBoneSelectState[props.targetBoneName]]);
+
+  enum LocalSelectState {
+    none = 0,
+    hover = 1,
+    selected = 2,
+  }
+  const [localSelectState, setLocalSelectState] = useState<LocalSelectState>(
+    LocalSelectState.none,
+  );
 
   const manupilatorObjSize = useMemo(() => {
     const box = new Box3().setFromObject(props.targetBone);
@@ -97,14 +107,18 @@ const BoneManupilator = (props: {
             objectToolHandler.sceneEditToolBoneControlHandlers?.onMouseDown?.(
               props.uuid,
               props.targetBoneName,
+              event,
             );
+            setLocalSelectState(LocalSelectState.selected);
           }}
           onMouseUp={(event: THREE.Event | undefined) => {
             mouseUpOnTransform = true;
             objectToolHandler.sceneEditToolBoneControlHandlers?.onMouseUp?.(
               props.uuid,
               props.targetBoneName,
+              event,
             );
+            setLocalSelectState(LocalSelectState.none);
           }}
           raycast={(_raycaster, intersects) => {
             // 直接マウスが下げられてない時、このオブジェクトは無視する
@@ -119,19 +133,29 @@ const BoneManupilator = (props: {
             objectToolHandler.sceneEditToolBoneControlHandlers?.onMouseDown?.(
               props.uuid,
               props.targetBoneName,
+              event,
             );
           }}
           onPointerUp={(event: ThreeEvent<PointerEvent> | undefined) => {
             objectToolHandler.sceneEditToolBoneControlHandlers?.onMouseUp?.(
               props.uuid,
               props.targetBoneName,
+              event,
             );
+          }}
+          onPointerOver={(event: THREE.Event | undefined) => {
+            setLocalSelectState(LocalSelectState.hover);
+          }}
+          onPointerOut={(event: THREE.Event | undefined) => {
+            setLocalSelectState(LocalSelectState.none);
           }}>
           <sphereBufferGeometry attach='geometry' args={[1, 30, 30]} />
           <meshBasicMaterial
             depthTest={false}
             transparent={true}
-            opacity={0.5}
+            opacity={
+              isSelected || localSelectState === LocalSelectState.hover ? 1.0 : 0.5
+            }
             color={'red'}
             userData={{ originalColor: 'white' }}></meshBasicMaterial>
         </mesh>
@@ -150,47 +174,6 @@ export const BoneManupilators = (props: {
   });
   const humanoid = props.targetVRM.humanoid;
   const dispatch = useDispatch();
-
-  for (const boneName in VRMHumanBoneName) {
-    const humanBoneName = camelcase(boneName) as VRMHumanBoneName;
-    const matrixOfBone = humanoid.getNormalizedBoneNode(humanBoneName)?.matrix?.toArray();
-    // threejs側のbone位置が変更された時に、store側にも反映させる
-    useEffect(() => {
-      const bone = humanoid.getNormalizedBoneNode(humanBoneName);
-      if (!bone) return;
-      const poseState: VRMPoseState = {
-        humanBoneName: {
-          position: serializeVector3(bone.position),
-          rotation: serializeEuler(bone.rotation),
-          scale: serializeVector3(bone.scale),
-        },
-      };
-      dispatch(
-        FigureComposerSlice.actions.setVRMPose({ id: props.uuid, pose: poseState }),
-      );
-    }, [...(matrixOfBone != null ? matrixOfBone : [])]);
-
-    /* store側のbone情報が更新された時に、threejs側も移動させる
-    useEffect(() => {
-      const position = composerState.vrmState.vrmPose[humanBoneName].position;
-      const rotation = composerState.vrmState.vrmPose[humanBoneName].rotation;
-      const scale = composerState.vrmState.vrmPose[humanBoneName].scale;
-
-      humanoid
-        .getNormalizedBoneNode(humanBoneName)
-        ?.position.set(position.x, position.y, position.z);
-      humanoid
-        .getNormalizedBoneNode(humanBoneName)
-        ?.rotation.set(rotation.x, rotation.y, rotation.z, rotation.order);
-      humanoid.getNormalizedBoneNode(humanBoneName)?.scale.set(scale.x, scale.y, scale.z);
-    }, [
-      Object.hasOwn(composerState.vrmState.vrmPose, humanBoneName),
-      ...Object.values(composerState.vrmState.vrmPose[humanBoneName].position),
-      ...Object.values(composerState.vrmState.vrmPose[humanBoneName].rotation),
-      ...Object.values(composerState.vrmState.vrmPose[humanBoneName].scale),
-    ]);
-    */
-  }
 
   return (
     <>

@@ -9,17 +9,16 @@ import {
   serializeVector3,
   serializeEuler,
 } from '../../../util/store/three-seiralize';
+import { Matrix4 } from 'three';
+import { composeTransform, extractTransform } from '../../../util/calculation';
+import undoable, { includeAction } from 'redux-undo';
 
 export type VRMPoseNodeState = {
-  position: SerializedVector3;
-  rotation: SerializedEuler;
-  scale: SerializedVector3;
+  matrix4: number[];
 };
 
 export type VRMEntity = {
-  translate: SerializedVector3;
-  scale: SerializedVector3;
-  rotation: SerializedEuler;
+  matrix4: number[];
   vrmPose: VRMPoseState;
   vrmBoneSelectState: VRMBoneSelectState;
 };
@@ -79,9 +78,7 @@ const figureComposerSlice = createSlice({
       const composerState = {
         vrmFilename: filename,
         vrmState: {
-          translate: serializeVector3(new THREE.Vector3()),
-          scale: serializeVector3(new THREE.Vector3()),
-          rotation: serializeEuler(new THREE.Euler()),
+          matrix4: new Matrix4().identity().toArray(),
           vrmPose: {},
           vrmBoneSelectState: {},
         },
@@ -107,12 +104,10 @@ const figureComposerSlice = createSlice({
     ) => {
       const { id, pose } = action.payload;
       Object.keys(pose).map(poseKey => {
-        const vrmState = {
-          position: pose[poseKey].position,
-          rotation: pose[poseKey].rotation,
-          scale: pose[poseKey].scale,
+        const vrmPoseState = {
+          matrix4: pose[poseKey].matrix4,
         };
-        state[id].vrmState.vrmPose[poseKey] = vrmState;
+        state[id].vrmState.vrmPose[poseKey] = vrmPoseState;
       });
     },
     setadditionInfomationOpenPoseFace: (
@@ -141,21 +136,27 @@ const figureComposerSlice = createSlice({
       action: PayloadAction<{ id: string; translateTo: THREE.Vector3 }>,
     ) => {
       const { id, translateTo } = action.payload;
-      state[id].vrmState.translate = serializeVector3(translateTo);
+      const vrmState = state[id].vrmState;
+      const { rotation, scale } = extractTransform(vrmState.matrix4);
+      vrmState.matrix4 = composeTransform(action.payload.translateTo, rotation, scale);
     },
     scaleComposer: (
       state,
       action: PayloadAction<{ id: string; scaleTo: THREE.Vector3 }>,
     ) => {
       const { id, scaleTo } = action.payload;
-      state[id].vrmState.scale = serializeVector3(scaleTo);
+      const vrmState = state[id].vrmState;
+      const { position, rotation } = extractTransform(vrmState.matrix4);
+      vrmState.matrix4 = composeTransform(position, rotation, scaleTo);
     },
     rotateComposer: (
       state,
       action: PayloadAction<{ id: string; rotateTo: THREE.Euler }>,
     ) => {
       const { id, rotateTo } = action.payload;
-      state[id].vrmState.rotation = serializeEuler(rotateTo);
+      const vrmState = state[id].vrmState;
+      const { position, scale } = extractTransform(vrmState.matrix4);
+      vrmState.matrix4 = composeTransform(position, rotateTo, scale);
     },
     changeSelectState: (
       state,
@@ -187,6 +188,27 @@ const figureComposerSlice = createSlice({
         });
       });
     },
+    updateTransformMatrix: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        matrix: Matrix4;
+      }>,
+    ) => {
+      const { id, matrix } = action.payload;
+      state[id].vrmState.matrix4 = matrix.toArray();
+    },
+    updateBoneTransformMatrix: (
+      state,
+      action: PayloadAction<{
+        id: string;
+        boneName: string;
+        matrix: Matrix4;
+      }>,
+    ) => {
+      const { id, boneName, matrix } = action.payload;
+      state[id].vrmState.vrmPose[boneName].matrix4 = matrix.toArray();
+    },
     changeDisplayState: (
       state,
       action: PayloadAction<{ id: string; displayState: number }>,
@@ -195,6 +217,14 @@ const figureComposerSlice = createSlice({
       state[id].renderState = displayState;
     },
   },
+});
+
+export const undoableFigureComposerReducer = undoable(figureComposerSlice.reducer, {
+  filter: includeAction([
+    figureComposerSlice.actions.updateTransformMatrix.type,
+    figureComposerSlice.actions.setVRMPose.type,
+    figureComposerSlice.actions.updateBoneTransformMatrix.type,
+  ]),
 });
 
 export default figureComposerSlice;

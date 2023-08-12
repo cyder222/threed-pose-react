@@ -5,6 +5,7 @@ import figureComposerSlice, {
   BoneSelectState,
   ComposerSelectState,
 } from '../../../store/threed/figure-composer/slice';
+import camelcase from 'camelcase';
 
 export const createObjectBoneMoveToolHandler = (
   dispatch: AppDispatch,
@@ -38,10 +39,18 @@ export const createObjectBoneMoveToolHandler = (
       onMouseMove(_uuid, _targetBoneName, _event, _raycaster) {
         return;
       },
-      onMouseUp(_uuid, _targetBoneName, event, _raycaster) {
+      onMouseUp(uuid, targetBoneName, event, _raycaster) {
         toolService.send('END_TOOL_OPERATION');
+
+        if (!event) return;
         event?.stopPropagation?.();
-        return;
+        dispatch(
+          figureComposerSlice.actions.updateBoneTransformMatrix({
+            id: uuid,
+            boneName: camelcase(targetBoneName),
+            matrix: event.target.object.matrix,
+          }),
+        );
       },
     },
     emptyHandlers: {
