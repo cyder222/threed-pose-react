@@ -76,6 +76,11 @@ export interface ToolStateSchema {
             pose_idle: Record<never, never>;
           };
         };
+        animation: {
+          states: {
+            animation_idle: Record<never, never>;
+          };
+        };
       };
     };
   };
@@ -89,6 +94,7 @@ export type ToolEvent =
   | { type: 'ROTATE' }
   | { type: 'SCALE' }
   | { type: 'POSE' }
+  | { type: 'ANIMATION' }
   | { type: 'ADD_OBJECT' }
   | { type: 'START_TOOL_OPERATION' }
   | { type: 'END_TOOL_OPERATION' }
@@ -152,6 +158,7 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
         ROTATE: 'target_selected.rotate',
         SCALE: 'target_selected.scale',
         POSE: 'target_selected.pose.pose_idle',
+        ANIMATION: 'target_selected.animation.animation_idle',
         CANCEL: '#tool.target_selecting',
       },
       exit: 'onSelectingExit',
@@ -300,6 +307,12 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
           },
           entry: 'onPoseEntry',
           exit: 'onPoseExit',
+        },
+        animation: {
+          initial: 'animation_idle',
+          states: {
+            animation_idle: {},
+          },
         },
       },
     },

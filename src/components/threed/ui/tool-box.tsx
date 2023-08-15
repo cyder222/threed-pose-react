@@ -17,6 +17,7 @@ import { ReactComponent as RotationIcon } from '../../../icons/rotation.svg';
 import { ReactComponent as ScaleIcon } from '../../../icons/scale.svg';
 import { ReactComponent as CloseIcon } from '../../../icons/close.svg';
 import { ReactComponent as PoseIcon } from '../../../icons/pose.svg';
+import { ReactComponent as AnimationModeIcon } from '../../../icons/animation_body.svg';
 import { Center } from 'chakra-ui';
 
 const PoseToolBox = (props: { position: Vector3; targetUUID: string }) => {
@@ -156,6 +157,11 @@ const TranslationToolbox = (props: { position: Vector3; targetUUID: string }) =>
                 toolService.send('POSE');
               }}>
               <PoseIcon width={24} height={24}></PoseIcon>
+            </button>
+          </Stack>
+          <Stack w={32} h={32} alignItems={'center'} justifyContent={'center'}>
+            <button>
+              <AnimationModeIcon width={24} height={24}></AnimationModeIcon>
             </button>
           </Stack>
           <Stack w={32} h={32} alignItems={'center'} justifyContent={'center'}>
