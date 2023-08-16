@@ -13,9 +13,11 @@ import {
 import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { sideMenuSlice } from './ui/left-side-menu/slice';
 import { RenderStateSlice } from './threed/camera/slice';
+import { figureComposerKeyTracksSlice } from './threed/keytrack/slice';
 
 export const rootReducer = combineReducers({
   figureComposers: undoableFigureComposerReducer,
+  figureComposerKeyTracks: figureComposerKeyTracksSlice.reducer,
   currentTool: toolStateSlice.reducer,
   sideMenu: sideMenuSlice.reducer,
   renderState: RenderStateSlice.reducer,
