@@ -55,7 +55,6 @@ const DefaultSceneToolBox = () => {
                 displayType: 'generationPanel',
               }),
             );
-            dispatch(ActionCreators.redo());
           }}>
           <MakeIcon width={24} height={24} />
         </Box>

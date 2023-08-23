@@ -310,6 +310,9 @@ const toolMachineConfig: MachineConfig<ToolContext, ToolStateSchema, ToolEvent> 
         },
         animation: {
           initial: 'animation_idle',
+          on: {
+            CANCEL: '#tool.target_selected',
+          },
           states: {
             animation_idle: {},
           },

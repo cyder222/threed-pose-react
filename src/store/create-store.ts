@@ -14,13 +14,15 @@ import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
 import { sideMenuSlice } from './ui/left-side-menu/slice';
 import { RenderStateSlice } from './threed/camera/slice';
 import { figureComposerKeyTracksSlice } from './threed/keytrack/slice';
+import { animationApi } from './threed/keytrack/api';
 
 export const rootReducer = combineReducers({
   figureComposers: undoableFigureComposerReducer,
-  figureComposerKeyTracks: figureComposerKeyTracksSlice.reducer,
   currentTool: toolStateSlice.reducer,
   sideMenu: sideMenuSlice.reducer,
   renderState: RenderStateSlice.reducer,
+  animation: figureComposerKeyTracksSlice.reducer,
+  [animationApi.reducerPath]: animationApi.reducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -40,7 +42,7 @@ export const store = configureStore({
   middleware: getDefaultMiddleWare => {
     const middleware = getDefaultMiddleWare({
       serializableCheck: false,
-    });
+    }).concat(animationApi.middleware);
     if (import.meta.env.MODE !== 'production') {
       middleware.push(logger);
     }

@@ -135,7 +135,7 @@ const Scene = () => {
             return (
               <group>
                 <Toolbox
-                  target={vrmRefs.current[key].current?.scene}
+                  target={vrmRefs.current[key].current || undefined}
                   targetUUID={key}></Toolbox>
                 <FigureComposer
                   vrmRef={vrmRefs.current[key]}

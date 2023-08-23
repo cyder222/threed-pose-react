@@ -8,6 +8,7 @@ import { FigureComposerListSelector } from '../../store/threed/figure-composer/s
 import FigureComposerSlice, {
   composerRenderState,
   ComposerSelectState,
+  PlayMode,
   VRMPoseNodeState,
   VRMPoseState,
 } from '../../store/threed/figure-composer/slice';
@@ -15,7 +16,14 @@ import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
 import { MToonMaterial, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
-import { Group, Material, Matrix4, MeshBasicMaterial, MeshDepthMaterial } from 'three';
+import {
+  AnimationMixer,
+  Group,
+  Material,
+  Matrix4,
+  MeshBasicMaterial,
+  MeshDepthMaterial,
+} from 'three';
 import {
   deserializeEuler,
   deserializeVector3,
@@ -32,6 +40,9 @@ import { renderStateSelector } from '../../store/threed/camera/selector';
 import { ModelRenderStateEnum } from '../../store/threed/camera/slice';
 import { outlineMaterial } from './materials/outline-material/outline-material';
 import { simpleColorMaterial } from './materials/simple-color-material/simple-color-material';
+import { KeyTrackListSelectorKeyTrackListSelector } from '../../store/threed/keytrack/selector';
+import { createAnimationClipFromMatrixData } from '../../store/threed/keytrack/util';
+import { useFrame } from 'react-three-fiber';
 
 const FigureComposer = (
   props: { uuid: string } & {
@@ -49,12 +60,25 @@ const FigureComposer = (
     return renderStateSelector.getModelRenderState(state);
   });
 
+  const playbackState = useSelector((state: RootState) => {
+    return FigureComposerListSelector.getPlayMode(state, props.uuid);
+  });
+
+  const keyTrack = useSelector((state: RootState) => {
+    return KeyTrackListSelectorKeyTrackListSelector.getKeyTrack(
+      state,
+      props.uuid,
+      props.uuid,
+    );
+  });
+
   const objectToolHandler = useObjectToolHandler();
   const [loading, setLoading] = useState(true);
   const [hovered, setHovered] = useState(false);
   const vrmRef = useRef<VRM>(null);
   const meshRef = useRef<Group>(null);
   const dispatch = useDispatch();
+  const [mixer, setMixer] = useState<AnimationMixer>();
   const vrmTransformMatrixArray = useSelector((state: RootState) => {
     return (
       FigureComposerListSelector.getTransformArray(state, props.uuid) ||
@@ -65,11 +89,12 @@ const FigureComposer = (
   // 並行位置を、reduxに合わせる
   useEffect(() => {
     if (!meshRef.current) return;
+    if (playbackState === PlayMode.animation) return; // animationモードでは合わせない
     const { position, scale, rotation } = extractTransform(vrmTransformMatrixArray);
     meshRef.current.position.copy(position);
     meshRef.current.rotation.copy(rotation);
     meshRef.current.scale.copy(scale);
-  }, [vrmTransformMatrixArray, meshRef.current]);
+  }, [vrmTransformMatrixArray, meshRef.current, playbackState]);
 
   //ポーズ情報をreduxに合わせる
   const boneNames = Object.keys(VRMHumanBoneName);
@@ -84,12 +109,13 @@ const FigureComposer = (
     );
     useEffect(() => {
       if (!vrm || !boneTransform) return;
+      if (playbackState === PlayMode.animation) return; // animationモードでは合わせない
       const { position, scale, rotation } = extractTransform(boneTransform);
       vrm.humanoid.getNormalizedBoneNode(name)?.rotation.copy(rotation);
       vrm.humanoid.getNormalizedBoneNode(name)?.position.copy(position);
       vrm.humanoid.getNormalizedBoneNode(name)?.scale.copy(scale);
       vrm.humanoid.update();
-    }, [boneTransform]);
+    }, [boneTransform, playbackState]);
   });
 
   const tool = useSelector((state: RootState) => {
@@ -163,6 +189,27 @@ const FigureComposer = (
       });
     },
   );
+
+  // アニメーションモードの時、animationに変更があったら再生する
+  useEffect(() => {
+    if (!keyTrack) return;
+    if (!vrm) return;
+    if (playbackState === PlayMode.animation) {
+      const clip = createAnimationClipFromMatrixData(keyTrack, vrm);
+      console.log(clip);
+      const inMixer = new THREE.AnimationMixer(vrm.scene);
+      const action = inMixer?.clipAction(clip);
+      action?.startAt(0);
+      action?.play();
+      setMixer(inMixer);
+    }
+  }, [playbackState, keyTrack, vrm]);
+
+  useFrame(() => {
+    if (playbackState === PlayMode.animation) {
+      mixer?.update(0.032); // 30fps
+    }
+  });
 
   // hover時、select時に見た目を変更する
   useEffect(() => {
