@@ -299,7 +299,7 @@ const ObjectToolBox = (props: { targetUUID: string; target?: VRM }) => {
 
   const getToolboxType = useMemo(() => {
     if (tool.tool.matches({ target_selected: 'animation' })) {
-      return 'animationControlMocde';
+      return 'animationControlMode';
     } else if (tool.tool.matches({ target_selected: 'pose' })) {
       return 'poseControlMode';
     } else if (tool.tool.matches('target_selected')) {
@@ -313,7 +313,7 @@ const ObjectToolBox = (props: { targetUUID: string; target?: VRM }) => {
   const [pos, setPos] = useState(new Vector3(0, 1, 0));
   return (
     <>
-      {getToolboxType === 'animationControlMocde' && (
+      {getToolboxType === 'animationControlMode' && (
         <AnimationToolBox targetUUID={props.targetUUID} position={pos}></AnimationToolBox>
       )}
       {getToolboxType === 'objectControlTool' && (
