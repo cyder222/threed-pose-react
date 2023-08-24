@@ -27,10 +27,11 @@ import { useToast } from '@chakra-ui/react';
 import { useLoadAnimationMutation } from '../../../store/threed/keytrack/api';
 import { FetchBaseQueryError } from '@reduxjs/toolkit/dist/query';
 import { SerializedError } from '@reduxjs/toolkit';
+import { useLoadAnimationClipMutation } from '../../../store/threed/animation-clip/api';
 
 const AnimationToolBox = (props: { position: Vector3; targetUUID: string }) => {
   const dispatch = useDispatch();
-  const [loadAnimation, { isSuccess, isError, error }] = useLoadAnimationMutation();
+  const [loadAnimation, { isSuccess, isError, error }] = useLoadAnimationClipMutation();
   const tool = useSelector((state: RootState) => {
     return toolSelector.getCurrent(state);
   });

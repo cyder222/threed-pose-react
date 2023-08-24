@@ -17,6 +17,7 @@ import { toolSelector } from '../../store/threed/tool/selectors';
 import * as THREE from 'three';
 import { MToonMaterial, VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import {
+  AnimationClip,
   AnimationMixer,
   Group,
   Material,
@@ -43,6 +44,9 @@ import { simpleColorMaterial } from './materials/simple-color-material/simple-co
 import { KeyTrackListSelectorKeyTrackListSelector } from '../../store/threed/keytrack/selector';
 import { createAnimationClipFromMatrixData } from '../../store/threed/keytrack/util';
 import { useFrame } from 'react-three-fiber';
+import { FigureComposerAnimationClipStateSlice } from '../../store/threed/animation-clip/slice';
+import { FigureComposerAnimationClipSelector } from '../../store/threed/animation-clip/selector';
+import { createAnimationClipFromMixamoAsset } from '../../util/threed/animation-loader';
 
 const FigureComposer = (
   props: { uuid: string } & {
@@ -66,6 +70,14 @@ const FigureComposer = (
 
   const keyTrack = useSelector((state: RootState) => {
     return KeyTrackListSelectorKeyTrackListSelector.getKeyTrack(
+      state,
+      props.uuid,
+      props.uuid,
+    );
+  });
+
+  const animationClip = useSelector((state: RootState) => {
+    return FigureComposerAnimationClipSelector.getAnimationClip(
       state,
       props.uuid,
       props.uuid,
@@ -205,9 +217,30 @@ const FigureComposer = (
     }
   }, [playbackState, keyTrack, vrm]);
 
+  const [animationDecodedClip, setAnimationDecodedClip] = useState<AnimationClip>();
+  useEffect(() => {
+    if (!animationClip) return;
+    if (!vrm) return;
+    setAnimationDecodedClip(createAnimationClipFromMixamoAsset(animationClip, vrm));
+  }, [animationClip, vrm]);
+
+  useEffect(() => {
+    if (!animationDecodedClip) return;
+
+    if (!vrm) return;
+    if (playbackState === PlayMode.animation) {
+      const inMixer = new THREE.AnimationMixer(vrm.scene);
+      const action = inMixer?.clipAction(animationDecodedClip);
+      action?.startAt(0);
+      action?.play();
+      setMixer(inMixer);
+    }
+  }, [playbackState, animationDecodedClip, vrm]);
+
   useFrame(() => {
     if (playbackState === PlayMode.animation) {
       mixer?.update(0.032); // 30fps
+      vrm?.update(0.032);
     }
   });
 
@@ -229,7 +262,8 @@ const FigureComposer = (
       if (!obj.userData.isVrmModel) return;
 
       let nextMat =
-        composerState.composerSelectState === ComposerSelectState.selected
+        composerState.composerSelectState === ComposerSelectState.selected &&
+        obj.userData.selectedMaterial
           ? obj.userData.selectedMaterial
           : obj.userData.originalMaterial;
       obj.material = nextMat;

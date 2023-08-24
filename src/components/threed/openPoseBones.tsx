@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Color, Euler, Mesh, MeshStandardMaterial, Quaternion, Vector3 } from 'three';
-import { useThree } from 'react-three-fiber';
+import { useFrame, useThree } from 'react-three-fiber';
 import { MeshLineGeometry, MeshLineMaterial } from 'meshline';
 import { RootState } from '../../store/create-store';
 import { additionalOpenPosePoint } from '../../store/threed/figure-composer/slice';
@@ -96,7 +96,7 @@ const OpenPoseBoneMeshLine = (props: {
     }
   };
 
-  useEffect(() => {
+  useFrame(() => {
     let startPosition = startBone?.getWorldPosition(new Vector3());
     let endPosition = endBone?.getWorldPosition(new Vector3());
     if (!faceObject) return;
@@ -132,41 +132,7 @@ const OpenPoseBoneMeshLine = (props: {
     meshRef.current.material = material;
     if (startCubeRef.current) startCubeRef.current.position.copy(startPosition);
     if (endCubeRef.current) endCubeRef.current.position.copy(endPosition);
-  }, [
-    meshRef.current,
-    startCubeRef.current,
-    endCubeRef.current,
-    ...(startBone?.getWorldPosition(new Vector3()).toArray() || []),
-    ...(endBone?.getWorldPosition(new Vector3()).toArray() || []),
-    composerState.additionInfomationOpenPoseFace &&
-    composerState.additionInfomationOpenPoseFace.Lear
-      ? Object.values(composerState.additionInfomationOpenPoseFace.Lear)
-      : null,
-    composerState.additionInfomationOpenPoseFace &&
-    composerState.additionInfomationOpenPoseFace.Rear
-      ? Object.values(composerState.additionInfomationOpenPoseFace.Rear)
-      : null,
-    composerState.additionInfomationOpenPoseFace &&
-    composerState.additionInfomationOpenPoseFace.Nose
-      ? Object.values(composerState.additionInfomationOpenPoseFace.Nose)
-      : null,
-    composerState.additionInfomationOpenPoseFace &&
-    composerState.additionInfomationOpenPoseFace.Leye
-      ? Object.values(composerState.additionInfomationOpenPoseFace.Leye)
-      : null,
-    composerState.additionInfomationOpenPoseFace &&
-    composerState.additionInfomationOpenPoseFace.Reye
-      ? Object.values(composerState.additionInfomationOpenPoseFace.Reye)
-      : null,
-    faceObject && facePoint.Lear
-      ? faceObject.localToWorld(
-          new THREE.Vector3().fromBufferAttribute(
-            faceObject.geometry.attributes.position as THREE.BufferAttribute,
-            facePoint.Lear,
-          ),
-        ).x
-      : null,
-  ]);
+  });
 
   return (
     <>

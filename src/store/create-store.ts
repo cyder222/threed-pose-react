@@ -15,6 +15,8 @@ import { sideMenuSlice } from './ui/left-side-menu/slice';
 import { RenderStateSlice } from './threed/camera/slice';
 import { figureComposerKeyTracksSlice } from './threed/keytrack/slice';
 import { animationApi } from './threed/keytrack/api';
+import { FigureComposerAnimationClipStateSlice } from './threed/animation-clip/slice';
+import { animationClipApi } from './threed/animation-clip/api';
 
 export const rootReducer = combineReducers({
   figureComposers: undoableFigureComposerReducer,
@@ -22,7 +24,9 @@ export const rootReducer = combineReducers({
   sideMenu: sideMenuSlice.reducer,
   renderState: RenderStateSlice.reducer,
   animation: figureComposerKeyTracksSlice.reducer,
+  animationClip: FigureComposerAnimationClipStateSlice.reducer,
   [animationApi.reducerPath]: animationApi.reducer,
+  [animationClipApi.reducerPath]: animationClipApi.reducer,
 });
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type
@@ -42,7 +46,9 @@ export const store = configureStore({
   middleware: getDefaultMiddleWare => {
     const middleware = getDefaultMiddleWare({
       serializableCheck: false,
-    }).concat(animationApi.middleware);
+    })
+      .concat(animationApi.middleware)
+      .concat(animationClipApi.middleware);
     if (import.meta.env.MODE !== 'production') {
       middleware.push(logger);
     }
