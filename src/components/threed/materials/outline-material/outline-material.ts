@@ -6,16 +6,16 @@ export const outlineMaterial = new ShaderMaterial({
     #include <skinning_pars_vertex>
 
     void main() {
-      #include <beginnormal_vertex>
-      #include <defaultnormal_vertex>
-
       #include <skinbase_vertex>
       #include <begin_vertex>
       #include <skinning_vertex>
       #include <project_vertex>
+      #include <beginnormal_vertex>
+      #include <defaultnormal_vertex>
+      #include <skinnormal_vertex>
 
       mvPosition = modelViewMatrix * vec4(transformed, 1.0);
-      vec4 displacement = vec4( normalize( normalMatrix * normal ) * 0.005, 0.0 ) + mvPosition;
+      vec4 displacement = vec4( normalize( normalMatrix * objectNormal ) * 0.005, 0.0 ) + mvPosition;
       gl_Position = projectionMatrix * displacement;
 
     }`,
