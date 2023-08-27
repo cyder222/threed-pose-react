@@ -5,7 +5,19 @@ import StableDiffusionApi, {
 import * as offscreenUtil from '../../../external/sd-api-frontend/src/utils/offscreen-canvas-util';
 import { ThreeContext } from '../../../context/three-context';
 import { Color } from 'three';
-import { Box, Button, FormControl, Textarea, FormLabel, Image } from '@chakra-ui/react';
+import {
+  Box,
+  Button,
+  FormControl,
+  Textarea,
+  FormLabel,
+  Image,
+  Tabs,
+  TabList,
+  TabPanels,
+  Tab,
+  TabPanel,
+} from '@chakra-ui/react';
 import React from 'react';
 
 export const SdSideMenu = () => {
@@ -78,23 +90,37 @@ export const SdSideMenu = () => {
     [gl, scene, camera],
   );
   return (
-    <form onSubmit={handleSubmit}>
-      <FormControl id='prompt' my={4}>
-        <FormLabel>ポジティブプロンプト</FormLabel>
-        <Textarea name='prompt' rows={5} />
-      </FormControl>
+    <Tabs variant='enclosed' isLazy>
+      <TabList>
+        <Tab>静止画</Tab>
+        <Tab>動画</Tab>
+      </TabList>
 
-      <FormControl id='negativePrompt' my={4}>
-        <FormLabel>ネガティブプロンプト</FormLabel>
-        <Textarea name='negativePrompt' rows={5} />
-      </FormControl>
+      <TabPanels>
+        <TabPanel>
+          <form onSubmit={handleSubmit}>
+            <form onSubmit={handleSubmit}>
+              <FormControl id='prompt' my={4}>
+                <FormLabel>ポジティブプロンプト</FormLabel>
+                <Textarea name='prompt' rows={5} />
+              </FormControl>
 
-      <Button type='submit' colorScheme='teal' mt={4}>
-        生成
-      </Button>
+              <FormControl id='negativePrompt' my={4}>
+                <FormLabel>ネガティブプロンプト</FormLabel>
+                <Textarea name='negativePrompt' rows={5} />
+              </FormControl>
 
-      <Image src={b64img} width='100%' mt={4} />
-      <Image src={b64img2} width='100%' mt={4} />
-    </form>
+              <Button type='submit' colorScheme='teal' mt={4}>
+                生成
+              </Button>
+
+              <Image src={b64img} width='100%' mt={4} />
+              <Image src={b64img2} width='100%' mt={4} />
+            </form>
+          </form>
+        </TabPanel>
+        <TabPanel>{/* 動画のコンポーネントをここに追加 */}</TabPanel>
+      </TabPanels>
+    </Tabs>
   );
 };
