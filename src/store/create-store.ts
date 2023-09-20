@@ -17,6 +17,7 @@ import { figureComposerKeyTracksSlice } from './threed/keytrack/slice';
 import { animationApi } from './threed/keytrack/api';
 import { FigureComposerAnimationClipStateSlice } from './threed/animation-clip/slice';
 import { animationClipApi } from './threed/animation-clip/api';
+import { animationPlaybackSlice } from './threed/animation-playback/slice';
 
 export const rootReducer = combineReducers({
   figureComposers: undoableFigureComposerReducer,
@@ -25,6 +26,7 @@ export const rootReducer = combineReducers({
   renderState: RenderStateSlice.reducer,
   animation: figureComposerKeyTracksSlice.reducer,
   animationClip: FigureComposerAnimationClipStateSlice.reducer,
+  animationPlayback: animationPlaybackSlice.reducer,
   [animationApi.reducerPath]: animationApi.reducer,
   [animationClipApi.reducerPath]: animationClipApi.reducer,
 });

@@ -93,6 +93,7 @@ const figureComposerSlice = createSlice({
         renderState: composerRenderState.renderVRM,
         composerSelectState: ComposerSelectState.none,
         playBackMode: PlayMode.pose,
+
         additionInfomationOpenPoseFace: {
           Lear: serializeVector3(new THREE.Vector3(875, 875, 875)),
           Rear: serializeVector3(new THREE.Vector3(928, 928, 928)),

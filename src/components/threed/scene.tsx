@@ -11,12 +11,12 @@ import figureComposerSlice from '../../store/threed/figure-composer/slice';
 import { RootState } from '../../store/create-store';
 import { Canvas } from '@react-three/fiber';
 import { Provider, useDispatch, useSelector } from 'react-redux';
-import FigureComposer from './figure-composer';
+import FigureComposer, { FigureComposerHandle } from './figure-composer';
 import * as THREE from 'three';
 import { toolSelector } from '../../store/threed/tool/selectors';
 import { EmptyObject } from './empty-object';
 import SimpleCameraControll from './control/simple-camera-controll';
-
+import { RootState as ThreeRootState } from 'react-three-fiber';
 import Toolbox from './ui/tool-box';
 import useSceneEditTool from '../../hooks/tools/use-scene-edit-tool';
 import { VRM } from '@pixiv/three-vrm';
@@ -27,9 +27,14 @@ import { ThreeContext } from '../../context/three-context';
 import { VStack } from '@chakra-ui/react';
 import { LeftToolBar } from '../ui/screen-tool/left-toolbar';
 import { useSidemenuComponent } from '../../hooks/ui/use-sidemenu';
+import { SceneContext } from '../../context/scene-context';
 
 interface VrmRefs {
   [key: string]: React.RefObject<VRM>;
+}
+
+interface FigureComposerRefs {
+  [key: string]: React.RefObject<FigureComposerHandle>;
 }
 
 const Scene = () => {
@@ -62,14 +67,13 @@ const Scene = () => {
 
   const sceneEditTool = useSceneEditTool();
   const vrmRefs = useRef<VrmRefs>({});
+  const figureComposerRefs = useRef<FigureComposerRefs>({});
   const [orbitEnable, setOrbitEnable] = useState(true);
   const canvas = useRef(null);
   const [camera, setCamera] = useState(
     new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.3, 20),
   );
-  const [glRender, setGlRender] = useState<THREE.WebGLRenderer | null>(null);
-  const [glScene, setGlScene] = useState<THREE.Scene | null>(null);
-  const [glCamera, setGlCamera] = useState<THREE.Camera | null>(null);
+  const [threeContext, setThreeContext] = useState<ThreeRootState | null>(null);
 
   useEffect(() => {
     dispatch(
@@ -99,8 +103,11 @@ const Scene = () => {
     <main
       style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'row' }}>
       <div style={{ width: '250px', borderRight: '1px solid' }}>
-        <ThreeContext.Provider value={{ gl: glRender, scene: glScene, camera: glCamera }}>
-          {sideMenu({})}
+        <ThreeContext.Provider value={{ context: threeContext }}>
+          <SceneContext.Provider
+            value={{ figureComposersContext: figureComposerRefs.current }}>
+            {sideMenu({})}
+          </SceneContext.Provider>
         </ThreeContext.Provider>
       </div>
       <div className='screen' style={{ position: 'relative', width: '100%' }}>
@@ -110,9 +117,7 @@ const Scene = () => {
           camera={camera}
           onCreated={state => {
             // 生成時に、外に渡す用のgl, camera, sceneをセットする
-            setGlRender(state.gl);
-            setGlCamera(state.camera);
-            setGlScene(state.scene);
+            setThreeContext(state);
           }}>
           <CameraControls
             enabled={orbitEnable}
@@ -132,12 +137,14 @@ const Scene = () => {
           <pointLight position={[20, 10, 10]} />
           {Object.keys(figureComposers).map(key => {
             vrmRefs.current[key] = React.createRef<VRM>();
+            figureComposerRefs.current[key] = React.createRef<FigureComposerHandle>();
             return (
               <group>
                 <Toolbox
                   target={vrmRefs.current[key].current || undefined}
                   targetUUID={key}></Toolbox>
                 <FigureComposer
+                  ref={figureComposerRefs.current[key]}
                   vrmRef={vrmRefs.current[key]}
                   key={key}
                   uuid={key}></FigureComposer>

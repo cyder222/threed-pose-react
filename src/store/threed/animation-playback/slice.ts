@@ -1,40 +1,48 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { AnimationClip, AnimationMixer } from 'three';
 
 export type AnimationPlaybackState = {
-  currentFrame: number;
-  currentTrackUUID: string;
+  currentTime: number;
   isPlaying: boolean;
   playbackRate: number;
   isLoop: boolean;
-  playbackStartFrame: number;
-  playbackEndFrame: number;
+  playSpeedFps: number;
+  playbackStartTime: number;
+  isBackgroundMode: boolean;
 };
 
 const initialPlaybackState: AnimationPlaybackState = {
-  currentFrame: 0,
-  currentTrackUUID: '',
-  isPlaying: false,
+  currentTime: 0,
+  isPlaying: true,
   playbackRate: 1.0,
-  isLoop: false,
-  playbackStartFrame: 0,
-  playbackEndFrame: 100,
+  isLoop: true,
+  playSpeedFps: 30,
+  playbackStartTime: 0,
+  isBackgroundMode: false,
 };
 
-const animationPlaybackSlice = createSlice({
+export const animationPlaybackSlice = createSlice({
   name: 'animationPlayback',
   initialState: initialPlaybackState,
   reducers: {
-    setCurrentFrame: (state, action: PayloadAction<number>) => {
-      state.currentFrame = action.payload;
+    initialize: (state, action: PayloadAction<{ fps: number }>) => {
+      state.currentTime = 0;
+      state.isPlaying = true;
+      state.isLoop = true;
+      state.playSpeedFps = 30;
+      state.playbackStartTime = 0;
     },
-    setCurrentTrack: (state, action: PayloadAction<string>) => {
-      state.currentTrackUUID = action.payload;
+    setCurrentTime: (state, action: PayloadAction<number>) => {
+      state.currentTime = action.payload;
     },
     togglePlayback: state => {
       state.isPlaying = !state.isPlaying;
     },
     setPlaybackRate: (state, action: PayloadAction<number>) => {
       state.playbackRate = action.payload;
+    },
+    setBackgroundMode: (state, action: PayloadAction<boolean>) => {
+      state.isBackgroundMode = action.payload;
     },
   },
 });

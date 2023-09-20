@@ -29,7 +29,7 @@ export const EmptyObject = (props: {
     const handleMouseUp = (e: MouseEvent) => {
       raycaster.current.setFromCamera(mouse, camera);
       const intersects = raycaster.current.intersectObjects(scene.children, true);
-      console.log(intersects);
+
       if (intersects.length === 0) {
         // 空白部分がクリックされたときにイベントを発生させる
         props.onPointerUp?.(e);
