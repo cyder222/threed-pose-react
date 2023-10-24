@@ -48,6 +48,54 @@ export const SdSideMenu = () => {
     protocol: 'http',
   });
 
+  const createSceqScreenshots = useCallback(async () => {
+    console.log('createSceqScreenshots');
+    const { figureComposersContext } = sceneObjectContext;
+    if (!figureComposersContext) {
+      console.log('no figure composer');
+      return [];
+    }
+    const timeImages: Array<{
+      boneImage: string;
+      depthImage: string;
+      outlineImage: string;
+    }> = [];
+    Object.values(figureComposersContext).forEach(async handle => {
+      const composerHandler = handle?.current;
+      if (!composerHandler) {
+        console.log('no composer handler');
+        return;
+      }
+      const duration = handle?.current?.getAnimationDuration();
+      if (!duration) {
+        return;
+      }
+      // 最初の時間にする
+      handle?.current?.setAnimationTimeImmediately(0);
+      let time = 0;
+      console.log('duration is ' + duration);
+      while (time < duration) {
+        console.log('time is ' + time);
+        time = time + 0.032;
+        handle?.current?.setAnimationTimeImmediately(time);
+        handle?.current?.updateImmediately();
+        const boneImage = await createScreenShot(ModelRenderStateEnum.renderPoseBone);
+        const depthImage = await createScreenShot(ModelRenderStateEnum.renderDepth);
+        const outlineImage = await createScreenShot(ModelRenderStateEnum.renderOutline);
+        if (!boneImage || !depthImage || !outlineImage) {
+          console.log('each animation image not found continue');
+          continue;
+        }
+        timeImages.push({
+          boneImage,
+          depthImage,
+          outlineImage,
+        });
+      }
+    });
+    return timeImages;
+  }, [sceneObjectContext.figureComposersContext]);
+
   const createScreenShot = useCallback(
     async (updateRenderState: ModelRenderStateEnum) => {
       if (!context) return;
@@ -55,7 +103,9 @@ export const SdSideMenu = () => {
       if (!gl || !camera || !scene) {
         return null;
       }
-      if (!sceneObjectContext) return;
+      if (!sceneObjectContext) {
+        return;
+      }
       const { figureComposersContext } = sceneObjectContext;
       if (!figureComposersContext) return;
       const { renderer, canvas } = backgroundRender(gl);
@@ -71,6 +121,7 @@ export const SdSideMenu = () => {
         handle?.current?.hideVRMImmediately();
       });
       renderer?.render(scene, camera);
+
       const screenshotData = renderer?.domElement.toDataURL();
       scene.background = new Color(0xfefefe);
       Object.values(figureComposersContext).forEach(handle => {
@@ -98,7 +149,8 @@ export const SdSideMenu = () => {
   let inIsRendering = false;
   const handleSubmit = useCallback(
     async (event: React.FormEvent<HTMLFormElement>) => {
-      if (isRendering) return;
+      event.preventDefault();
+      if (inIsRendering) return;
       inIsRendering = true;
       event.preventDefault();
       console.log('submit');
@@ -142,6 +194,24 @@ export const SdSideMenu = () => {
     },
     [context],
   );
+  const handleVideoSubmit = useCallback(
+    async (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      console.log('handleVideoSubmit');
+      const screenShots = await createSceqScreenshots();
+      if (!screenShots) {
+        console.log('no screenshots');
+        return;
+      }
+      if (screenShots.length == 0) {
+        console.log('no screenshot2');
+        return;
+      }
+      const imageBase64 = screenShots[screenShots.length - 1].boneImage;
+      setb64Image(imageBase64);
+    },
+    [createSceqScreenshots],
+  );
   return (
     <Tabs variant='enclosed' isLazy>
       <TabList>
@@ -171,10 +241,7 @@ export const SdSideMenu = () => {
           </form>
         </TabPanel>
         <TabPanel>
-          <form
-            onSubmit={() => {
-              return;
-            }}>
+          <form onSubmit={handleVideoSubmit}>
             <FormControl id='videoPrompt' my={4}>
               <FormLabel>ポジティブプロンプト</FormLabel>
               <Textarea name='videoPrompt' rows={5} />

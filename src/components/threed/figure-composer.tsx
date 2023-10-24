@@ -65,6 +65,11 @@ export type FigureComposerHandle = {
   hideBoneImmediately: () => void;
   visibleVRMImmediately: () => void;
   hideVRMImmediately: () => void;
+  playAnimationImmediately: (time: number) => void;
+  stopAnimationImmediately: () => void;
+  setAnimationTimeImmediately: (time: number) => void;
+  getAnimationDuration: () => number | undefined;
+  getAnimationTime: () => number | undefined;
 };
 
 const FigureComposer = forwardRef<
@@ -81,10 +86,10 @@ const FigureComposer = forwardRef<
   ) => {
     useImperativeHandle(ref, () => ({
       // 外からfigureComposerの状態を強制アップデートするためのコマンド
-      // reactのサイクルに乗った切替では、動画生成の場合などに問題が出るため
+      // reactのサイクルに乗った切替では、動画生成に支障があるため用意
       updateImmediately: () => {
-        vrm?.update(0);
         animationAction?.getMixer().update(0);
+        vrm?.update(0);
         openPoseBonesRef.current?.updateBonesImmediately();
       },
       visibleBoneImmediately: () => {
@@ -100,6 +105,21 @@ const FigureComposer = forwardRef<
       hideVRMImmediately: () => {
         if (!vrm?.scene) return;
         vrm.scene.visible = false;
+      },
+      playAnimationImmediately: (time: number = 0) => {
+        animationAction?.startAt(time);
+      },
+      stopAnimationImmediately: () => {
+        animationAction?.stop();
+      },
+      getAnimationTime: () => {
+        return animationAction?.time;
+      },
+      setAnimationTimeImmediately: time => {
+        animationAction?.getMixer().setTime(time);
+      },
+      getAnimationDuration: () => {
+        return animationAction?.getClip().duration;
       },
     }));
     const url = useSelector((state: RootState) => {
@@ -331,6 +351,38 @@ const FigureComposer = forwardRef<
       [modelRenderState],
     );
 
+    const setMaterial = (obj: THREE.Mesh) => {
+      if (!obj.userData.isVrmModel) return;
+
+      let nextMat =
+        composerState.composerSelectState === ComposerSelectState.selected &&
+        obj.userData.selectedMaterial
+          ? obj.userData.selectedMaterial
+          : obj.userData.originalMaterial;
+      obj.material = nextMat;
+
+      let advancedMat: Material | null | Array<Material> = null;
+      if (isFlagSet(ModelRenderStateEnum.renderDepth)) {
+        advancedMat = new MeshDepthMaterial();
+      }
+      if (isFlagSet(ModelRenderStateEnum.renderOutline)) {
+        advancedMat = [simpleColorMaterial, outlineMaterial];
+      }
+
+      if (advancedMat != null) {
+        if (Array.isArray(obj.material)) {
+          if (!Array.isArray(advancedMat)) {
+            obj.material = obj.material.map(material => {
+              return advancedMat! as Material;
+            });
+          } else {
+            obj.material = advancedMat;
+          }
+        } else {
+          obj.material = advancedMat!;
+        }
+      }
+    };
     // hover時、select時に見た目を変更する
     useEffect(() => {
       console.log('material change');
@@ -346,42 +398,10 @@ const FigureComposer = forwardRef<
           return;
         }
       };
-      const setMaterial = (obj: THREE.Mesh, hover: boolean) => {
-        if (!obj.userData.isVrmModel) return;
-
-        let nextMat =
-          composerState.composerSelectState === ComposerSelectState.selected &&
-          obj.userData.selectedMaterial
-            ? obj.userData.selectedMaterial
-            : obj.userData.originalMaterial;
-        obj.material = nextMat;
-
-        let advancedMat: Material | null | Array<Material> = null;
-        if (isFlagSet(ModelRenderStateEnum.renderDepth)) {
-          advancedMat = new MeshDepthMaterial();
-        }
-        if (isFlagSet(ModelRenderStateEnum.renderOutline)) {
-          advancedMat = [simpleColorMaterial, outlineMaterial];
-        }
-
-        if (advancedMat != null) {
-          if (Array.isArray(obj.material)) {
-            if (!Array.isArray(advancedMat)) {
-              obj.material = obj.material.map(material => {
-                return advancedMat! as Material;
-              });
-            } else {
-              obj.material = advancedMat;
-            }
-          } else {
-            obj.material = advancedMat!;
-          }
-        }
-      };
 
       vrm?.scene?.traverse(obj => {
         if (obj instanceof THREE.Mesh) {
-          setMaterial(obj, hovered);
+          setMaterial(obj);
         }
       });
     }, [composerState.composerSelectState, modelRenderState]);
