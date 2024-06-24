@@ -1,5 +1,10 @@
 import { RootState } from '../../create-store';
-import { ComposerSelectState, FigureComposerEntity, FigureComposersState } from './slice';
+import {
+  ComposerSelectState,
+  FigureComposerEntity,
+  FigureComposersState,
+  PlayMode,
+} from './slice';
 
 export const FigureComposerListSelector = {
   getAll: (state: RootState): FigureComposersState => {
@@ -17,6 +22,9 @@ export const FigureComposerListSelector = {
         return entry[1].composerSelectState === ComposerSelectState.selected;
       }),
     );
+  },
+  getPlayMode: (state: RootState, uuid: string): PlayMode => {
+    return state.figureComposers.present[uuid].playBackMode;
   },
   getTransformArray: (state: RootState, uuid: string): number[] | undefined => {
     return state.figureComposers.present[uuid].vrmState?.matrix4;

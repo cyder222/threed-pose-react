@@ -39,6 +39,12 @@ export enum BoneSelectState {
   none = 0,
   selected = 1,
 }
+
+export enum PlayMode {
+  pose = 0,
+  animation = 1,
+}
+
 export type additionalOpenPosePoint = 'Lear' | 'Nose' | 'Rear' | 'Leye' | 'Reye';
 export type AdditionalInfomationOpenPoseFace = {
   [partName in additionalOpenPosePoint]: SerializedVector3 | null;
@@ -52,6 +58,7 @@ export type FigureComposerEntity = {
   renderState: number; // composerRenderStateの&演算で入れる、
   additionInfomationOpenPoseFace?: AdditionalInfomationOpenPoseFace;
   composerSelectState: ComposerSelectState;
+  playBackMode: PlayMode;
 };
 
 export type FigureComposersState = {
@@ -85,6 +92,8 @@ const figureComposerSlice = createSlice({
         uuid: uuid,
         renderState: composerRenderState.renderVRM,
         composerSelectState: ComposerSelectState.none,
+        playBackMode: PlayMode.pose,
+
         additionInfomationOpenPoseFace: {
           Lear: serializeVector3(new THREE.Vector3(875, 875, 875)),
           Rear: serializeVector3(new THREE.Vector3(928, 928, 928)),
@@ -215,6 +224,13 @@ const figureComposerSlice = createSlice({
     ) => {
       const { id, displayState } = action.payload;
       state[id].renderState = displayState;
+    },
+    changePlaybackMode: (
+      state,
+      action: PayloadAction<{ uuid: string; playbackMode: PlayMode }>,
+    ) => {
+      const { uuid, playbackMode } = action.payload;
+      state[uuid].playBackMode = playbackMode;
     },
   },
 });

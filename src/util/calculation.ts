@@ -1,9 +1,5 @@
 import { Matrix4, Vector3, Euler, Quaternion } from 'three';
 
-export function isFlagSet(renderState: number, flag: number): boolean {
-  return (renderState & flag) > 0;
-}
-
 export const extractTransform = (matrixArray: number[]) => {
   const matrix = new Matrix4();
   matrix.fromArray(matrixArray);

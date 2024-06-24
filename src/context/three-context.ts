@@ -1,15 +1,12 @@
 // Contextの作成
 
 import { createContext } from 'react';
+import { RootState } from 'react-three-fiber';
 
 // 3Dシーンのカメラとシーンを保持するContextを作成
 interface ThreeContextType {
-  camera: THREE.Camera | null;
-  scene: THREE.Scene | null;
-  gl: THREE.WebGLRenderer | null;
+  context: RootState | null;
 }
 export const ThreeContext = createContext<ThreeContextType>({
-  camera: null,
-  scene: null,
-  gl: null,
+  context: null,
 });

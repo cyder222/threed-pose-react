@@ -9,6 +9,8 @@
     "@emotion/core": "^11.0.0",
     "@emotion/react": "^11.10.6",
     "@emotion/styled": "^11.10.6",
+    "@ffmpeg/core": "^0.8.3",
+    "@ffmpeg/ffmpeg": "^0.9.4",
     "@pixiv/three-vrm": "^1.0.8",
     "@react-three/drei": "^9.57.0",
     "@reduxjs/toolkit": "^1.9.3",
@@ -31,6 +33,7 @@
     "postprocessing": "^6.32.2",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "react-icons": "^4.10.1",
     "react-redux": "^8.0.5",
     "react-three-fiber": "^6.0.13",
     "redux-logger": "^3.0.6",
@@ -49,7 +52,9 @@
     "build": "vite build",
     "serve": "vite preview",
     "test": "vite test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write ./**/*.{js,jsx,ts,tsx,json,css,md}"
   },
   "eslintConfig": {
     "extends": [

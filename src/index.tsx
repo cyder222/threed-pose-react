@@ -6,11 +6,12 @@ import { store } from './store/create-store';
 import App from './App';
 import './index.css';
 import reportWebVitals from './reportWebVitals';
+import customTheme from './theme/dark-theme';
 
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement);
 root.render(
   <Provider store={store}>
-    <ChakraProvider theme={theme} resetCSS>
+    <ChakraProvider theme={customTheme} resetCSS>
       <App />
     </ChakraProvider>
   </Provider>,

@@ -2,7 +2,6 @@ import { Box, Button, VStack, Tooltip } from '@chakra-ui/react';
 import React from 'react';
 import { useDispatch } from 'react-redux';
 import { ReactComponent as AddIcon } from '../../../icons/add_human.svg';
-import { ReactComponent as AnimationModeIcon } from '../../../icons/animation_body.svg';
 import { ReactComponent as CameraSetting } from '../../../icons/camera_setting.svg';
 import { ReactComponent as MakeIcon } from '../../../icons/toaster.svg';
 import { ReactComponent as RedoIcon } from '../../../icons/redo.svg';
@@ -56,7 +55,6 @@ const DefaultSceneToolBox = () => {
                 displayType: 'generationPanel',
               }),
             );
-            dispatch(ActionCreators.redo());
           }}>
           <MakeIcon width={24} height={24} />
         </Box>
