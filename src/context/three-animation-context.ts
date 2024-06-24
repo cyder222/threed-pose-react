@@ -6,7 +6,6 @@ import { OpenPoseBonesHandle } from '../components/threed/openPoseBones';
 
 // 3Dシーンで、アニメーション操作に必要な情報を保持するContextを作成
 // (動画シーン生成用)
-export interface ThreeFigureAnimationEntity {}
 export interface ThreeDirectFigureComposerType {
   figureComposerHandles: { [uuid: string]: FigureComposerHandle };
 }
