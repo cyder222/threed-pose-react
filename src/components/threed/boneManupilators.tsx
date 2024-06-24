@@ -3,26 +3,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Box3, Group, Object3D, Vector3 } from 'three';
 import { RootState } from '../../store/create-store';
-import FigureComposerSlice, {
-  BoneSelectState,
-  composerRenderState,
-  ComposerSelectState,
-  VRMPoseNodeState,
-  VRMPoseState,
-} from '../../store/threed/figure-composer/slice';
+import { BoneSelectState } from '../../store/threed/figure-composer/slice';
 import { FigureComposerListSelector } from '../../store/threed/figure-composer/selectors';
 import useObjectToolHandler from '../../hooks/tools/use-scene-edit-tool';
-import {
-  deserializeEuler,
-  deserializeVector3,
-  serializeEuler,
-  serializeVector3,
-} from '../../util/store/three-seiralize';
 import { VRM, VRMHumanBoneName } from '@pixiv/three-vrm';
 import { toolSelector } from '../../store/threed/tool/selectors';
-import camelcase from 'camelcase';
 import { ThreeEvent } from 'react-three-fiber';
-import React from 'react';
 
 const BoneManupilator = (props: {
   uuid: string;
