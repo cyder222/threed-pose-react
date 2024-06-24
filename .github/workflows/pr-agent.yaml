@@ -6,6 +6,7 @@ on:
     types: [created, edited]
 jobs:
   pr_agent_job:
+    if: ${{ github.event.sender.type != 'Bot' }}
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -19,7 +20,7 @@ jobs:
         env:
           CONFIG.MODEL: gpt-4o-2024-05-13 # 最新モデルの対応
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
-          GITHUB_TOKEN: ${{ secrets.GIT_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           PR_REVIEWER.EXTRA_INSTRUCTIONS: 'Please use Japanese in descriptions.'
           PR_DESCRIPTION.ADD_ORIGINAL_USER_DESCRIPTION: true
           PR_DESCRIPTION.EXTRA_INSTRUCTIONS: 'Please use Japanese in descriptions. Titles should have prefix of commitlint pattern such as `feat:`, `chore:`, `test:`, `fix:`, `ci:`, `docs:` etc'
